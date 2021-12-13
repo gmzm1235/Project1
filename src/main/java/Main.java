@@ -1,17 +1,40 @@
 import abstractclasses.Protokoll;
 import database.MongoDBConnectionHandler;
+import de.tudarmstadt.ukp.dkpro.core.api.ner.type.NamedEntity;
+import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence;
+import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
 import implementation.*;
+import database.*;
+import org.apache.uima.UIMAException;
+import org.apache.uima.analysis_engine.AnalysisEngine;
+import org.apache.uima.cas.CAS;
+import org.apache.uima.cas.impl.XCASSerializer;
+import org.apache.uima.fit.factory.AggregateBuilder;
+import org.apache.uima.fit.factory.JCasFactory;
+import org.apache.uima.fit.pipeline.SimplePipeline;
+import org.apache.uima.fit.util.JCasUtil;
+import org.apache.uima.jcas.JCas;
+import org.bson.Document;
+import org.hucompute.textimager.uima.gervader.GerVaderSentiment;
+import org.hucompute.textimager.uima.spacy.SpaCyMultiTagger3;
+import org.hucompute.textimager.uima.type.Sentiment;
+import org.xml.sax.SAXException;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Scanner;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.*;
+
+import static org.apache.uima.fit.factory.AnalysisEngineFactory.createEngineDescription;
+
 
 /***
 
  * die Location Path von den xml files wird von dem User in dem Class Main angefordert und
  * um dieser Folder zu lesen wird Class Main mithilfe der implementation.Plenarsitzung Class gearbeitet.
  * Die Methode, die den angeforderten Job ausführt, wird basierend auf der bereitgestellten Eingabe aufgerufen.
+ * Nach Eingabe des Benutzers kann Main auch mit MongoDB verbunden und
+ * Operationen(Delete, Insert, Update, Read) mit MongoDB ausgeführt werden.
  * Wenn der User einen falschen Input eingibt, dann wird von dem User noch Mal neue Input angefordert
  *
  *
@@ -19,13 +42,19 @@ import java.util.Scanner;
 public class Main {
     public static Plenarsitzung plenarsitzung;
     public static Scanner input;
+    public static MongoDBConnectionHandler db;
 
     public static void main(String[] args) {
         try {
+            //JCasDeneme();
+            db = new MongoDBConnectionHandler();
+            MyJCas();
+            System.exit(0);
             input = new Scanner(System.in);
             String folderlocation = "xmlfiles";
             System.out.println("Enter xmlfilespath : ");
             //folderlocation = input.nextLine();
+            //plenarsitzung = new Plenarsitzung(folderlocation);
             plenarsitzung = new Plenarsitzung("/home/gbatil/Downloads/xmlfiles");
 
             //plenarsitzung = new Plenarsitzung(folderlocation);
@@ -39,8 +68,10 @@ public class Main {
                 System.out.println("Enter 4 : Protokoll Tagesordunungpunkttexts");
                 System.out.println("Enter 5 : MongoDB test");
                 System.out.println("Enter 6 : MongoDB insert all collection");
-                System.out.println("Enter 7 : MongoDBremove all collection");
-                System.out.println("Enter 9 : Exit");
+                System.out.println("Enter 7 : MongoDB remove all collection");
+                System.out.println("Enter 8 : Show MongoDB Protocol");
+                System.out.println("Enter 9 : CasObjeckt + Pipeline");
+                System.out.println("Enter 10 : Exit");
                 System.out.println();
                 System.out.print("Enter your choice : ");
                 choice = input.nextInt();
@@ -66,8 +97,15 @@ public class Main {
                 else if (choice == 7) {
                     MongodbDeleteAllCollections();
                 }
+                else if (choice == 8) {
+                    MongoShowProtocol();
+                    //MongoShowRedner();
+                }
+                else if (choice == 9) {
+                    MyJCas();
+                }
 
-                else if (choice == 9){
+                else if (choice == 10){
                     break;
                 }
                 else {
@@ -99,7 +137,7 @@ public class Main {
     }
 
     /***
-     * der Methode wird Informationen darüber, welcher Sprecher zu welcher Partei gehört geprint
+     * die Methode wird Informationen darüber, welcher Sprecher zu welcher Partei gehört geprint
      */
     public static void printFraktionRedners() {
         plenarsitzung.printAllFraktionRedners();
@@ -119,18 +157,25 @@ public class Main {
         plenarsitzung.printProtokollTagesordnungspunkt(situngsnumber, tagesornungspunktnumber.trim());
 
     }
+
+    /***
+     * die Methode wird  das Erstellen,
+     * Lesen, Updaten und Löschen von Dokumenten in der MongoDB getestet.
+     */
     public static void MongodbTest(){
-        MongoDBConnectionHandler db = new MongoDBConnectionHandler();
+
+        Redner_MonngoDB_File_Impl rmongo = new Redner_MonngoDB_File_Impl(db);
+        Protokoll_MongoDB_Impl pmongo = new Protokoll_MongoDB_Impl(db);
 
         System.out.println("11000616 idli redner bilgileri :");
-        Redner r = db.readRedner("11000616");
+        Redner r = rmongo.readRedner("11000616");
         if (r!=null){
             System.out.println(r.getId()+" "+r.getTitel()+" "+r.getVorname()+" "+ r.getNachname());
         }
         else {
             System.out.println("bulunamadi");
         }
-        long DeleteCount = db.deleteRedner("11000616");
+        long DeleteCount = rmongo.deleteRedner("11000616");
         if(DeleteCount > 0) {
             System.out.println(DeleteCount + " Kayit silindi .....");
         }
@@ -143,8 +188,8 @@ public class Main {
         r.setTitel("Dr.");
         r.setVorname("Wolfgang");
         r.setNachname("Schäuble");
-        db.updateRedner(r);
-        Redner r2 = db.readRedner("11001938");
+        rmongo.updateRedner(r);
+        Redner r2 = rmongo.readRedner("11001938");
         if (r2!=null){
             System.out.println(r2.getId()+" "+r2.getTitel()+" "+r2.getVorname()+" "+ r2.getNachname());
         }
@@ -153,7 +198,7 @@ public class Main {
         }
 
 
-        DeleteCount = db.deleteProtocol("221");
+        DeleteCount = pmongo.deleteProtocol("221");
         if(DeleteCount > 0) {
             System.out.println(DeleteCount + " 221 nolu Protokol silindi .....");
         }
@@ -162,7 +207,7 @@ public class Main {
         }
         try {
 
-            Protokoll prt = db.readProtocol("197");
+            Protokoll prt = pmongo.readProtocol("197");
             if (prt!=null){
                 PrintProtocol(prt);
             }
@@ -180,11 +225,55 @@ public class Main {
 
 
 
-        //db.updateRedner() test edilicek***********************************
 
 
 
     }
+
+
+    /***
+     * Diese Methode wird die Redner aus der MongoDB Databank gelesen und rufen wir PrintRedner Methode auf ,
+     * um die Redner auszudrucken.
+     *
+     * @throws Exception
+     */
+    public static void MongoShowRedner() throws Exception {
+        ArrayList<Redner> redners = new ArrayList<>();
+
+        Redner_MonngoDB_File_Impl rmongo = new Redner_MonngoDB_File_Impl(db);
+        redners = rmongo.readAllRednersfromMongo();
+        for(Redner r: redners){
+            PrintRedner(r);
+        }
+
+    }
+
+    /***
+     * Diese Methode wird die Protocols aus der MongoDB Databank gelesen und ausgedruckt.
+     * @throws Exception
+     */
+    public static void MongoShowProtocol() throws Exception {
+        System.out.println("Enter sitzungsnumber : ");
+        String sitzungsnumber = input.nextLine();
+        Protokoll_MongoDB_Impl pmongo = new Protokoll_MongoDB_Impl(db);
+        Protokoll p = pmongo.readProtocol(sitzungsnumber);
+        PrintProtocol(p);
+    }
+
+    /***
+     * Diese Methode ist eine  HilfsMethode. Wir verwenden sie, um die Redner auszudrucken.
+     * @param r
+     */
+    public static void PrintRedner(Redner r) {
+        if(r!=null) {
+            System.out.println(r.getId()+ " "+ r.getTitel()+ " "+ r.getVorname()+" "+ r.getNachname());
+        }
+    }
+
+    /***
+     * Diese Methode ist eine HilfsMethode. Wir verwenden sie, um die Protocols auszudrucken.
+     * @param p
+     */
     public static void PrintProtocol(Protokoll p) {
         if(p!=null) {
             System.out.println(p.getSitzungsnumber()+ " "+p.getTitel()+ " "+ p.getDatum());
@@ -192,7 +281,13 @@ public class Main {
                 System.out.println(t.getTopid());
                 if (t.getReden() != null) {
                     for(Rede r : t.getReden()) {
-                        System.out.println(r.getId()+ " "+ r.getRedner().getId()+ " "+ r.getRedner().getTitel()+ " "+ r.getRedner().getVorname()+ " "+ r.getRedner().getNachname());
+                        if(r.getRedner() != null){
+                            System.out.println(r.getId()+ " Redner : "+ r.getRedner().getId()+ " "+ r.getRedner().getTitel()+ " "+ r.getRedner().getVorname()+ " "+ r.getRedner().getNachname());
+                        }
+                        else {
+                            System.out.println(r.getId());
+                        }
+
                         for(String s: r.getRedetext()){
                             System.out.println(s);
                         }
@@ -206,8 +301,14 @@ public class Main {
 
     }
 
+    /***
+     * diese Methode wird sich von CLass Redner_MonngoDB_File_Impl und CLass Protokoll_MongoDB_Impl zu Nutze gemacht.
+     * Sie wird die Collections (Redner und Protokolle) zu MongoDB Databank eingefügt.
+     */
+
     public static void MongodbInsertAllCollections(){
-        MongoDBConnectionHandler db = new MongoDBConnectionHandler();
+        Redner_MonngoDB_File_Impl rmongo = new Redner_MonngoDB_File_Impl(db);
+        Protokoll_MongoDB_Impl pmongo = new Protokoll_MongoDB_Impl(db);
         db.CreateCollections();
         HashMap<String, Redner> rednerMap = plenarsitzung.getRednerMap();
         Iterator<String> itr = rednerMap.keySet().iterator();
@@ -216,15 +317,22 @@ public class Main {
         while (itr.hasNext()){
             rednerid = itr.next();
             redner = rednerMap.get(rednerid);
-            db.insertRedner(redner);
+            rmongo.insertRedner(redner);
         }
-        System.out.println("rednerlar eklendi......");
+        System.out.println("die Redner werden hinzugefügt......");
         ArrayList<Protokoll> plist = plenarsitzung.getProtokollList();
-        for (int i = 0;i<2;i++){
-            db.insertProtocol(plist.get(i));
+        for (int i = 0;i<plist.size();i++){
+            try {
+                System.out.println((i+1)+ " Protocol : "+ plist.get(i).getSitzungsnumber());
+                pmongo.insertProtocol(plist.get(i));
+            }
+           catch (Exception exp){
+               System.out.println(" Error in Protocol : "+ plist.get(i).getSitzungsnumber());
+                exp.printStackTrace();
+           }
 
         }
-        System.out.println("protocoller eklendi .....");
+        System.out.println("die Protokolle werden hinzugefügt......");
 
 
 
@@ -232,10 +340,191 @@ public class Main {
 
 
     }
+
+    /***
+     * diese Methode löscht die Collections aus der Databank.
+     */
     public static void MongodbDeleteAllCollections(){
-        MongoDBConnectionHandler db = new MongoDBConnectionHandler();
         db.DeleteCollections();
 
+
+    }
+
+    /***
+     * In der Methode werden die Protocols mithilfe der Methode readAllProtocolsfromMongo aus der KLasse Protokoll_MongoDB_Impl gelesen.
+     * Dann entsteht eine CAS Objects aus jeder Redetext aus der Protokolle, danach werden Sie in der jCaslist eingefügt.
+     *  Mit der for-Schleife können Inhalte der jCaslist durchlaufen. Jede CAS Objects aus der Liste wird mit Pipline ausgepackt.
+     * @throws UIMAException
+     */
+    public static void MyJCas( ) throws UIMAException{
+        Protokoll_MongoDB_Impl pmongo = new Protokoll_MongoDB_Impl(db);
+        ArrayList<Protokoll> protokolls = pmongo.readAllProtocolsfromMongo();
+        System.out.println("die Protokolle werden hinzugefügt......");
+        ArrayList<JCas> jCaslist = new ArrayList<>();
+        StringBuilder sb;
+        JCas jCas;
+        int count = 0;
+        boolean exit = false;
+
+        for(Protokoll p: protokolls){
+            for (Tagesordnungspunkt t: p.getTagesordnungspunkts()){
+                for(Rede r : t.getReden()){
+                    count++;
+                    sb = new StringBuilder();
+                    for(String s: r.getRedetext()){
+                        sb.append(s);
+                    }
+                    jCas = toCas(sb.toString());
+                    //jCas = toCas(" Dies ist eine Text. Ich gehe nach Hause und dann trinke ich ein Kaffee.");
+                    jCaslist.add(jCas);
+                    //System.out.println(sb.toString());
+                    if(count> 3){
+                        exit = true; //tüm redeleri jcas a cevirmek icin bu satiri commentle
+                        break;
+                    }
+
+                }
+                if(exit){
+                    break;
+                }
+            }
+            if(exit){
+                break;
+            }
+        }
+        System.out.println("redecount : "+count);
+
+        AggregateBuilder builder = new AggregateBuilder();
+        builder.add(createEngineDescription(SpaCyMultiTagger3.class,
+                SpaCyMultiTagger3.PARAM_REST_ENDPOINT, "http://spacy.prg2021.texttechnologylab.org"));
+        builder.add(createEngineDescription(GerVaderSentiment.class,
+                GerVaderSentiment.PARAM_REST_ENDPOINT, "http://gervader.prg2021.texttechnologylab.org",
+                GerVaderSentiment.PARAM_SELECTION , "text,de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence"));
+        AnalysisEngine pAE = builder.createAggregate();
+        int i = 1;
+        for(JCas j: jCaslist) {
+            System.out.println("######################################    "+ i + "   ###########################################");
+            SimplePipeline.runPipeline(j, pAE);
+            PrintJCasInfo(j);
+            //System.out.println(getXml(j));
+            i++;
+            //break;
+        }
+
+
+
+
+    }
+
+    /***
+     * Dank des Pipelines wird jede CAS Obeckt dem Xml-String serialisiert.
+     * @param jCas
+     * @return
+     */
+    public static String getXml(JCas jCas){
+        CAS cas = jCas.getCas();
+        ByteArrayOutputStream outTmp = new ByteArrayOutputStream();
+        try {
+            XCASSerializer.serialize(cas, outTmp);
+        } catch (IOException |SAXException e) {
+            e.printStackTrace();
+        }
+        String xml = outTmp.toString();
+        return xml;
+
+    }
+
+    /***
+     * die Methode JCAS wird toCas Methode erweitert.
+     * Hier erstellen wir also der Text aus Redetext aus der Databank.
+     * @param text
+     * @return
+     * @throws UIMAException
+     */
+    public static JCas toCas(String text) throws UIMAException{
+        return JCasFactory.createText(text, "de");
+    }
+
+    /***
+     * Diese Methode erstellt aus der JCas Object Sentence, Tokens, NameEntity und Sentiment.
+     * @param jCas
+     */
+    public static void PrintJCasInfo(JCas jCas) {
+        Collection<Sentence> sentences = JCasUtil.select(jCas, Sentence.class);
+
+        for (Sentence sentence: sentences) {
+            System.out.println("Sentence :" + sentence.getCoveredText());
+
+            Collection<Token> tokens = JCasUtil.selectCovered(Token.class, sentence);
+
+            for(Token token : JCasUtil.select(jCas, Token.class)) {
+                System.out.println("Tokens : " + token.getCoveredText());
+                System.out.println(token.getPosValue());
+            }
+
+            for(NamedEntity entity : JCasUtil.select(jCas, NamedEntity.class)) {
+                System.out.println("Entity:  "+ entity.getCoveredText()+ " Value : "+ entity.getValue());
+                if(entity.getValue().equals("PER")) {
+                    System.out.println("Person" + entity.getCoveredText() );
+                }
+                else {
+                    System.out.println("Location : "+ entity.getCoveredText());
+                }
+            }
+        }
+        for(Sentence sentence : JCasUtil.select(jCas, Sentence.class)) {
+            System.out.println(sentence.getCoveredText());
+            for (Sentiment sentiment :  JCasUtil.selectCovered(Sentiment.class, sentence)) {
+                System.out.println("Sentiment : "+ sentiment.getSentiment());
+            }
+        }
+
+    }
+    public static void JCasDeneme() throws UIMAException {
+
+        JCas jCas = JCasFactory.createText(" Dies ist eine Text. Ich gehe nach Hause und dann trinke ich ein Kaffee.Wir treffen uns ins Kino. Ich gehe in die Schule.", "de");
+
+        AggregateBuilder builder = new AggregateBuilder();
+        builder.add(createEngineDescription(SpaCyMultiTagger3.class,
+                SpaCyMultiTagger3.PARAM_REST_ENDPOINT, "http://spacy.prg2021.texttechnologylab.org"));
+        builder.add(createEngineDescription(GerVaderSentiment.class,
+                GerVaderSentiment.PARAM_REST_ENDPOINT, "http://gervader.prg2021.texttechnologylab.org",
+                GerVaderSentiment.PARAM_SELECTION , "text,de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence"));
+        AnalysisEngine pAE = builder.createAggregate();
+        SimplePipeline.runPipeline(jCas, pAE);
+        String xml = getXml(jCas);
+        System.out.println(xml);
+
+
+        /*Collection<Sentence> sentences = JCasUtil.select(jCas, Sentence.class);
+
+        for (Sentence sentence: sentences) {
+            System.out.println("Sentence :" + sentence.getCoveredText());
+
+            Collection<Token> tokens = JCasUtil.selectCovered(Token.class, sentence);
+
+            for(Token token : JCasUtil.select(jCas, Token.class)) {
+                System.out.println("Tokens : " + token.getCoveredText());
+                System.out.println(token.getPosValue());
+            }
+
+            for(NamedEntity entity : JCasUtil.select(jCas, NamedEntity.class)) {
+                System.out.println("Entity:  "+ entity.getCoveredText()+ " Value : "+ entity.getValue());
+                if(entity.getValue().equals("PER")) {
+                    //System.out.println("Person" + entity.getCoveredText() );
+                }
+                else {
+                    //System.out.println("Location : "+ entity.getCoveredText());
+                }
+            }
+        }
+        for(Sentence sentence : JCasUtil.select(jCas, Sentence.class)) {
+            System.out.println(sentence.getCoveredText());
+            for (Sentiment sentiment :  JCasUtil.selectCovered(Sentiment.class, sentence)) {
+                System.out.println("Sentiment : "+ sentiment.getSentiment());
+            }
+        }
+*/
 
     }
 
