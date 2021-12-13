@@ -136,7 +136,7 @@ public class MongoDBConnectionHandler {
             redendoclist = (List<Document>) d.get("reden");
             t = new Tagesordnungspunkt();
             t.setTopid(topid);
-            //t.setReden(buildredelist(redendoclist , t));
+            t.setReden(buildredelist(redendoclist , t));
             t.setProtokoll(protokoll);
             tlist.add(t);
         }
@@ -153,22 +153,18 @@ public class MongoDBConnectionHandler {
         for(Document d : rededoclist) {
             id = (String) d.get("id");
             rednerid = d.getString("rednerid");
-            //redetextdoclist = (List<Document>) d.get("redetext");
-            redetextlist = (List<String>) d.get("redetext");
+            redetextlist = d.getList("redetext",String.class);
+
 
             r = new Rede();
             r.setId(id);
-            r.setRedner(readRedner("rednerid"));
-            //r.setRedetext(buildredetextlist(redetextdoclist));
+            r.setRedner(readRedner(rednerid));
             r.setRedetext(new ArrayList<>(redetextlist));
             r.setTagesordnungspunkt(tagesordnungspunkt);
             redelist.add(r);
 
         }
         return redelist;
-    }
-    private ArrayList<String> buildredetextlist (List<Document> redetextdoclist) {
-        throw new UnsupportedOperationException();
     }
 
     private List<Document> redelistdocument(List<Rede> reden) {

@@ -1,11 +1,23 @@
 import abstractclasses.Protokoll;
 import database.MongoDBConnectionHandler;
 import implementation.*;
+import org.apache.uima.UIMAException;
+import org.apache.uima.analysis_engine.AnalysisEngine;
+import org.apache.uima.fit.factory.AggregateBuilder;
+import org.apache.uima.fit.factory.AnalysisEngineFactory;
+import org.apache.uima.fit.factory.JCasFactory;
+import org.apache.uima.fit.pipeline.SimplePipeline;
+import org.apache.uima.jcas.JCas;
+import org.apache.uima.resource.ResourceInitializationException;
+import org.hucompute.textimager.uima.gervader.GerVaderSentiment;
+import org.hucompute.textimager.uima.spacy.SpaCyMultiTagger3;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Scanner;
+
+import static org.apache.uima.fit.factory.AnalysisEngineFactory.createEngineDescription;
 
 /***
 
@@ -22,6 +34,8 @@ public class Main {
 
     public static void main(String[] args) {
         try {
+            JCasDeneme();
+            System.exit(0);
             input = new Scanner(System.in);
             String folderlocation = "xmlfiles";
             System.out.println("Enter xmlfilespath : ");
@@ -192,7 +206,13 @@ public class Main {
                 System.out.println(t.getTopid());
                 if (t.getReden() != null) {
                     for(Rede r : t.getReden()) {
-                        System.out.println(r.getId()+ " "+ r.getRedner().getId()+ " "+ r.getRedner().getTitel()+ " "+ r.getRedner().getVorname()+ " "+ r.getRedner().getNachname());
+                        if(r.getRedner() != null){
+                            System.out.println(r.getId()+ " Redner : "+ r.getRedner().getId()+ " "+ r.getRedner().getTitel()+ " "+ r.getRedner().getVorname()+ " "+ r.getRedner().getNachname());
+                        }
+                        else {
+                            System.out.println(r.getId());
+                        }
+
                         for(String s: r.getRedetext()){
                             System.out.println(s);
                         }
@@ -235,6 +255,22 @@ public class Main {
     public static void MongodbDeleteAllCollections(){
         MongoDBConnectionHandler db = new MongoDBConnectionHandler();
         db.DeleteCollections();
+
+
+    }
+    public static void JCasDeneme() throws UIMAException {
+        JCas jCas = JCasFactory.createJCas();
+        jCas.setDocumentText("Dies ist ein Text.");
+        jCas.setDocumentLanguage("de");
+
+        AggregateBuilder builder = new AggregateBuilder();
+        builder.add(createEngineDescription(SpaCyMultiTagger3.class,
+                SpaCyMultiTagger3.PARAM_REST_ENDPOINT, "http://spacy.prg2021.texttechnologylab.org"));
+        builder.add(createEngineDescription(GerVaderSentiment.class,
+                GerVaderSentiment.PARAM_REST_ENDPOINT, "http://gervader.prg2021.texttechnologylab.org",
+                GerVaderSentiment.PARAM_SELECTION , "text,de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence"));
+        AnalysisEngine pAE = builder.createAggregate();
+        SimplePipeline.runPipeline(jCas, pAE);
 
 
     }

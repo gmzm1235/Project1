@@ -4,11 +4,26 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="e1156904-ce1d-4ad2-963a-0043eea1bf13" name="Changes" comment="3" />
+    <list default="true" id="e1156904-ce1d-4ad2-963a-0043eea1bf13" name="Changes" comment="3">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/Main.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/database/MongoDBConfig.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/database/MongoDBConnectionHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/database/MongoDBConnectionHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/Main.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/Main.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/database/MongoDBConfig.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/database/MongoDBConnectionHandler.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/database/MongoDBConnectionHandler.class" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Class" />
+      </list>
+    </option>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -36,7 +51,7 @@
   <component name="PropertiesComponent">
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../uebung2" />
   </component>
   <component name="RunManager">
     <configuration name="Main" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
@@ -75,7 +90,14 @@
       <option name="project" value="LOCAL" />
       <updated>1639403244428</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="3">
+      <created>1639404321495</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1639404321495</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
