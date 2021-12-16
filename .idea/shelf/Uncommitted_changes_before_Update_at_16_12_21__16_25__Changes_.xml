@@ -1,0 +1,39 @@
+<changelist name="Uncommitted_changes_before_Update_at_16_12_21,_16_25_[Changes]" date="1639668332020" recycled="true" deleted="true">
+  <option name="PATH" value="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_16_12_21,_16_25_[Changes]/shelved.patch" />
+  <option name="DESCRIPTION" value="Uncommitted changes before Update at 16.12.21, 16:25 [Changes]" />
+  <binary>
+    <option name="BEFORE_PATH" value="target/classes/database/Protokoll_MongoDB_Impl.class" />
+    <option name="AFTER_PATH" value="target/classes/database/Protokoll_MongoDB_Impl.class" />
+    <option name="SHELVED_PATH" value="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_16_12_21,_16_25_[Changes]/Protokoll_MongoDB_Impl.class" />
+  </binary>
+  <binary>
+    <option name="BEFORE_PATH" />
+    <option name="AFTER_PATH" value="usecase_2.1.pdf" />
+    <option name="SHELVED_PATH" value="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_16_12_21,_16_25_[Changes]/usecase_2.1.pdf" />
+  </binary>
+  <binary>
+    <option name="BEFORE_PATH" value="target/classes/implementation/RedeJcas.class" />
+    <option name="AFTER_PATH" value="target/classes/implementation/RedeJcas.class" />
+    <option name="SHELVED_PATH" value="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_16_12_21,_16_25_[Changes]/RedeJcas.class" />
+  </binary>
+  <binary>
+    <option name="BEFORE_PATH" />
+    <option name="AFTER_PATH" value="uml_02.pdf" />
+    <option name="SHELVED_PATH" value="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_16_12_21,_16_25_[Changes]/uml_02.pdf" />
+  </binary>
+  <binary>
+    <option name="BEFORE_PATH" />
+    <option name="AFTER_PATH" value="usecase_2.2.pdf" />
+    <option name="SHELVED_PATH" value="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_16_12_21,_16_25_[Changes]/usecase_2.2.pdf" />
+  </binary>
+  <binary>
+    <option name="BEFORE_PATH" value="target/classes/Main.class" />
+    <option name="AFTER_PATH" value="target/classes/Main.class" />
+    <option name="SHELVED_PATH" value="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_16_12_21,_16_25_[Changes]/Main.class" />
+  </binary>
+  <binary>
+    <option name="BEFORE_PATH" value="target/classes/database/JCas_MongoDB_Impl.class" />
+    <option name="AFTER_PATH" value="target/classes/database/JCas_MongoDB_Impl.class" />
+    <option name="SHELVED_PATH" value="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_16_12_21,_16_25_[Changes]/JCas_MongoDB_Impl.class" />
+  </binary>
+</changelist>
