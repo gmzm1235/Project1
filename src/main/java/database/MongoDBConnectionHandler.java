@@ -57,6 +57,7 @@ public class MongoDBConnectionHandler {
         try {
             database.createCollection("redners");
             database.createCollection("protocol");
+            database.createCollection("uima");
 
 
         }
@@ -68,8 +69,10 @@ public class MongoDBConnectionHandler {
     public void DeleteCollections () {
         database.getCollection("redners").deleteMany(new Document());
         database.getCollection("protocol").deleteMany(new Document());
+        database.getCollection("uima").deleteMany(new Document());
 
     }
+
 
 }
 

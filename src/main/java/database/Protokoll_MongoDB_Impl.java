@@ -6,6 +6,7 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.result.DeleteResult;
+import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.constituent.S;
 import implementation.Protokoll_File_Impl;
 import implementation.Rede;
 import implementation.Tagesordnungspunkt;
@@ -129,8 +130,7 @@ public class Protokoll_MongoDB_Impl {
         String sitzungsnumber;
         Protokoll protokoll;
         ArrayList<Protokoll> protokolls = new ArrayList<>();
-        int i = 0;
-        while (cursor.hasNext() && i <1 ) {
+        while (cursor.hasNext() ) {
             doc = cursor.next();
             sitzungsnumber = doc.getString("sitzungsnumber");
             try {
@@ -142,7 +142,6 @@ public class Protokoll_MongoDB_Impl {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            i++;
 
         }
         return protokolls;
@@ -228,6 +227,35 @@ public class Protokoll_MongoDB_Impl {
         }
         return lst;
 
+    }
+
+    /***
+     * in dieser Methode wird der Rede, der bestimmten Parameter (redeid) hat, aus der MongoDB aktualisiert.
+     * @param rede
+     */
+    public void updateRede (Rede rede) {
+        MongoCollection<Document> collection = database.getCollection("protocol");
+        Document query = new Document("sitzungsnumber", rede.getTagesordnungspunkt().getProtokoll().getSitzungsnumber());
+        ArrayList<Document> listtages = new ArrayList<>();
+        Document tages = new Document("topid",rede.getTagesordnungspunkt().getTopid());
+        ArrayList<Document> listreden = new ArrayList<>();
+        Document rededoc = new Document("id", rede.getId());
+        tages.append("reden", listreden);
+        listreden.add(rededoc);
+        listtages.add(tages);
+        query.append("tagesordnungspunkts", listtages);
+        MongoCursor<Document> cursor = collection.find(query).iterator();
+        Document doc;
+        if (cursor.hasNext()){
+            doc = cursor.next();
+            List<String> redetext = doc.getList("redetext", String.class);
+            for(String s : redetext) {
+                System.out.println(s);
+            }
+        }
+        else {
+            System.out.println("rede not found");
+        }
     }
 
 }

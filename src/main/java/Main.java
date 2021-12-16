@@ -46,10 +46,10 @@ public class Main {
 
     public static void main(String[] args) {
         try {
-            //JCasDeneme();
             db = new MongoDBConnectionHandler();
-            MyJCas();
-            System.exit(0);
+            //MyJCas();
+
+            //System.exit(0);
             input = new Scanner(System.in);
             String folderlocation = "xmlfiles";
             System.out.println("Enter xmlfilespath : ");
@@ -166,22 +166,27 @@ public class Main {
 
         Redner_MonngoDB_File_Impl rmongo = new Redner_MonngoDB_File_Impl(db);
         Protokoll_MongoDB_Impl pmongo = new Protokoll_MongoDB_Impl(db);
-
-        System.out.println("11000616 idli redner bilgileri :");
+        System.out.println("Test über readRedner :");
+        System.out.println("Redner ( 11000616 redenid ) Informationen :");
         Redner r = rmongo.readRedner("11000616");
         if (r!=null){
             System.out.println(r.getId()+" "+r.getTitel()+" "+r.getVorname()+" "+ r.getNachname());
         }
         else {
-            System.out.println("bulunamadi");
+            System.out.println("der Redner existiert nicht");
         }
+        System.out.println("Test über deleteRedner :");
+        System.out.println("Löscht Redner rednerid : 11000616");
         long DeleteCount = rmongo.deleteRedner("11000616");
         if(DeleteCount > 0) {
-            System.out.println(DeleteCount + " Kayit silindi .....");
+            System.out.println(DeleteCount + " der Eintrag Redner wird gelöscht..........");
         }
         else {
-            System.out.println(DeleteCount + " 11000616 Kayit yok .....");
+            System.out.println(DeleteCount + " 11000616 id Eintrag existiert nicht");
         }
+        System.out.println("Test über Update redner : ");
+        System.out.println(" Bsp : Wir aktualisieren nur die Titel ");
+
 
         r= new Redner();
         r.setId("11001938");
@@ -194,25 +199,27 @@ public class Main {
             System.out.println(r2.getId()+" "+r2.getTitel()+" "+r2.getVorname()+" "+ r2.getNachname());
         }
         else {
-            System.out.println("bulunamadi");
+            System.out.println("der Eintrag existiert nicht.........");
         }
 
-
+        System.out.println("Test über Delete Protocol");
+        System.out.println("Löscht 221 Protocol");
         DeleteCount = pmongo.deleteProtocol("221");
         if(DeleteCount > 0) {
-            System.out.println(DeleteCount + " 221 nolu Protokol silindi .....");
+            System.out.println(DeleteCount + " 221 Protokoll wird gelöscht......");
         }
         else {
-            System.out.println(DeleteCount + " 221 nolu Protokol yok .....");
+            System.out.println(DeleteCount + " 221 Protokoll existiert nicht....");
         }
         try {
-
+            System.out.println("Test über Read Protocol ");
+            System.out.println("Read 197 Protokoll");
             Protokoll prt = pmongo.readProtocol("197");
             if (prt!=null){
                 PrintProtocol(prt);
             }
             else {
-                System.out.println(" 197 nolu Protokol yok .....");
+                System.out.println("197 Protokoll existiert nicht....");
             }
 
 
@@ -348,6 +355,7 @@ public class Main {
         db.DeleteCollections();
 
 
+
     }
 
     /***
@@ -360,37 +368,39 @@ public class Main {
         Protokoll_MongoDB_Impl pmongo = new Protokoll_MongoDB_Impl(db);
         ArrayList<Protokoll> protokolls = pmongo.readAllProtocolsfromMongo();
         System.out.println("die Protokolle werden hinzugefügt......");
-        ArrayList<JCas> jCaslist = new ArrayList<>();
         StringBuilder sb;
         JCas jCas;
         int count = 0;
         boolean exit = false;
+        ArrayList<RedeJcas> redejcaslist = new ArrayList<>();
+        RedeJcas rj;
 
         for(Protokoll p: protokolls){
             for (Tagesordnungspunkt t: p.getTagesordnungspunkts()){
                 for(Rede r : t.getReden()){
+
                     count++;
                     sb = new StringBuilder();
                     for(String s: r.getRedetext()){
                         sb.append(s);
                     }
                     jCas = toCas(sb.toString());
-                    //jCas = toCas(" Dies ist eine Text. Ich gehe nach Hause und dann trinke ich ein Kaffee.");
-                    jCaslist.add(jCas);
                     //System.out.println(sb.toString());
+                    rj = new RedeJcas(r,jCas);
+                    redejcaslist.add(rj);
                     if(count> 3){
-                        exit = true; //tüm redeleri jcas a cevirmek icin bu satiri commentle
+                        //exit = true; //tüm redeleri jcas a cevirmek icin bu satiri commentle
                         break;
                     }
 
                 }
-                if(exit){
-                    break;
-                }
+                //if(exit){
+                    //break;
+                //}
             }
-            if(exit){
-                break;
-            }
+            //if(exit){
+                //break;
+            //}
         }
         System.out.println("redecount : "+count);
 
@@ -401,12 +411,16 @@ public class Main {
                 GerVaderSentiment.PARAM_REST_ENDPOINT, "http://gervader.prg2021.texttechnologylab.org",
                 GerVaderSentiment.PARAM_SELECTION , "text,de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence"));
         AnalysisEngine pAE = builder.createAggregate();
+
+        JCas_MongoDB_Impl jmongo = new JCas_MongoDB_Impl(db);
+
         int i = 1;
-        for(JCas j: jCaslist) {
+        for(RedeJcas rjs : redejcaslist) {
             System.out.println("######################################    "+ i + "   ###########################################");
-            SimplePipeline.runPipeline(j, pAE);
-            PrintJCasInfo(j);
+            SimplePipeline.runPipeline(rjs.getJcas(), pAE);
+            //PrintJCasInfo(j);
             //System.out.println(getXml(j));
+            jmongo.InsertJcasXml(getXml(rjs.getJcas()),rjs.getRede());
             i++;
             //break;
         }
@@ -480,53 +494,8 @@ public class Main {
         }
 
     }
-    public static void JCasDeneme() throws UIMAException {
-
-        JCas jCas = JCasFactory.createText(" Dies ist eine Text. Ich gehe nach Hause und dann trinke ich ein Kaffee.Wir treffen uns ins Kino. Ich gehe in die Schule.", "de");
-
-        AggregateBuilder builder = new AggregateBuilder();
-        builder.add(createEngineDescription(SpaCyMultiTagger3.class,
-                SpaCyMultiTagger3.PARAM_REST_ENDPOINT, "http://spacy.prg2021.texttechnologylab.org"));
-        builder.add(createEngineDescription(GerVaderSentiment.class,
-                GerVaderSentiment.PARAM_REST_ENDPOINT, "http://gervader.prg2021.texttechnologylab.org",
-                GerVaderSentiment.PARAM_SELECTION , "text,de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence"));
-        AnalysisEngine pAE = builder.createAggregate();
-        SimplePipeline.runPipeline(jCas, pAE);
-        String xml = getXml(jCas);
-        System.out.println(xml);
 
 
-        /*Collection<Sentence> sentences = JCasUtil.select(jCas, Sentence.class);
-
-        for (Sentence sentence: sentences) {
-            System.out.println("Sentence :" + sentence.getCoveredText());
-
-            Collection<Token> tokens = JCasUtil.selectCovered(Token.class, sentence);
-
-            for(Token token : JCasUtil.select(jCas, Token.class)) {
-                System.out.println("Tokens : " + token.getCoveredText());
-                System.out.println(token.getPosValue());
-            }
-
-            for(NamedEntity entity : JCasUtil.select(jCas, NamedEntity.class)) {
-                System.out.println("Entity:  "+ entity.getCoveredText()+ " Value : "+ entity.getValue());
-                if(entity.getValue().equals("PER")) {
-                    //System.out.println("Person" + entity.getCoveredText() );
-                }
-                else {
-                    //System.out.println("Location : "+ entity.getCoveredText());
-                }
-            }
-        }
-        for(Sentence sentence : JCasUtil.select(jCas, Sentence.class)) {
-            System.out.println(sentence.getCoveredText());
-            for (Sentiment sentiment :  JCasUtil.selectCovered(Sentiment.class, sentence)) {
-                System.out.println("Sentiment : "+ sentiment.getSentiment());
-            }
-        }
-*/
-
-    }
 
 
 
