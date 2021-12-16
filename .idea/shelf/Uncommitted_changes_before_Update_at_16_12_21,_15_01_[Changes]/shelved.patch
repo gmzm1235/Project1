@@ -1,0 +1,511 @@
+Index: src/main/java/database/MongoDBConnectionHandler.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package database;\nimport java.util.*;\n\nimport com.mongodb.*;\nimport com.mongodb.client.MongoDatabase;\nimport org.bson.Document;\nimport implementation.*;\n\n\nimport java.util.Collections;\n\n/***\n * In dieser KLasse MongoDBConnectionHandler wird die Verbindung zur Datenbank hergestellt.\n * Und in der CreateCollection werden dem Inhalt  der Redner und der  Protokolle Collection in der Databank erstellt.\n * in der DeleteCollection werden dem Inhalt der Collections aus der Databank gelöscht.\n * Ausserdem hat MongoDatabase mit Getter-Setter Methode definiert.\n */\npublic class MongoDBConnectionHandler {\n    public Plenarsitzung plenarsitzung;\n    private MongoDatabase database;\n    public  MongoDBConnectionHandler(){\n\n        connect();\n    }\n\n\n    public MongoDatabase getDatabase() {\n        return database;\n    }\n\n    public void setDatabase(MongoDatabase database) {\n        this.database = database;\n    }\n\n    public void connect(){\n        Properties properties = new Properties();\n        properties.setProperty(\"remote_user\",\"PRG_WiSe21_226\");\n        properties.setProperty(\"remote_database\",\"PRG_WiSe21_226\");\n        properties.setProperty(\"remote_password\",\"E6g0Oa6p\");\n        properties.setProperty(\"remote_host\",\"prg2021.texttechnologylab.org\");\n        properties.setProperty(\"remote_port\",\"27020\");\n        properties.setProperty(\"remote_collections\",\"protocol\");\n\n        MongoCredential credential = MongoCredential.createCredential(properties.getProperty(\"remote_user\"),\n                properties.getProperty(\"remote_database\"), properties.getProperty(\"remote_password\").toCharArray());\n        MongoClientOptions options = MongoClientOptions.builder().sslEnabled(false).build();\n\n        MongoClient mongoClient;\n        mongoClient = new MongoClient(new ServerAddress(properties.getProperty(\"remote_host\"),\n                Integer.parseInt(properties.getProperty(\"remote_port\"))), Collections.singletonList(credential), options);\n        database = mongoClient.getDatabase(properties.getProperty(\"remote_database\"));\n\n\n\n    }\n    public void CreateCollections () {\n        try {\n            database.createCollection(\"redners\");\n            database.createCollection(\"protocol\");\n\n\n        }\n        catch (Exception exp){\n            System.out.println(\"redners yaratilamadi\");\n        }\n\n    }\n    public void DeleteCollections () {\n        database.getCollection(\"redners\").deleteMany(new Document());\n        database.getCollection(\"protocol\").deleteMany(new Document());\n\n    }\n\n}\n\n\n\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/database/MongoDBConnectionHandler.java b/src/main/java/database/MongoDBConnectionHandler.java
+--- a/src/main/java/database/MongoDBConnectionHandler.java	(revision 7f137f192dfe31ef6f555603066e2173d949de06)
++++ b/src/main/java/database/MongoDBConnectionHandler.java	(date 1639658724980)
+@@ -57,6 +57,7 @@
+         try {
+             database.createCollection("redners");
+             database.createCollection("protocol");
++            database.createCollection("uima");
+ 
+ 
+         }
+@@ -68,8 +69,10 @@
+     public void DeleteCollections () {
+         database.getCollection("redners").deleteMany(new Document());
+         database.getCollection("protocol").deleteMany(new Document());
++        database.getCollection("uima").deleteMany(new Document());
+ 
+     }
++
+ 
+ }
+ 
+Index: src/main/java/database/Protokoll_MongoDB_Impl.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package database;\n\nimport abstractclasses.Protokoll;\nimport com.mongodb.client.FindIterable;\nimport com.mongodb.client.MongoCollection;\nimport com.mongodb.client.MongoCursor;\nimport com.mongodb.client.MongoDatabase;\nimport com.mongodb.client.result.DeleteResult;\nimport implementation.Protokoll_File_Impl;\nimport implementation.Rede;\nimport implementation.Tagesordnungspunkt;\nimport org.bson.Document;\nimport org.bson.types.ObjectId;\n\nimport java.util.ArrayList;\nimport java.util.List;\n\n/***\n * In dieser KLasse werden Prozesse(Insert, Delete, Read) in der Datenbank mit Protokollen durchgeführt.\n *\n */\n\npublic class Protokoll_MongoDB_Impl {\n    public  Redner_MonngoDB_File_Impl rednerMongoDBFile;\n    public MongoDBConnectionHandler mongoDBConnectionHandler;\n    private MongoDatabase database;\n\n\n    public Protokoll_MongoDB_Impl(MongoDBConnectionHandler connection) {\n        this.mongoDBConnectionHandler = connection;\n        this.database = connection.getDatabase();\n        this.rednerMongoDBFile = new Redner_MonngoDB_File_Impl(connection);\n    }\n\n    /***\n     * In dieser Methode wird das Protocol in dem MongoDB hinzugefügt.\n     * @param protokoll\n     */\n    public void insertProtocol (Protokoll protokoll) {\n            MongoCollection<Document> protocols = database.getCollection(\"protocol\");\n            Document document = new Document(\"_id\",new ObjectId());\n            document.append(\"titel\", protokoll.getTitel());\n            document.append(\"datum\", protokoll.getDatum());\n            document.append(\"sitzungsnumber\", protokoll.getSitzungsnumber());\n            List<Document> lst = new ArrayList<>();\n            Document doc;\n            if(protokoll.getTagesordnungspunkts() != null){\n                for(Tagesordnungspunkt t:protokoll.getTagesordnungspunkts()) {\n                    doc = new Document();\n                    doc.append(\"topid\", t.getTopid());\n                    doc.append(\"reden\", redelistdocument(t.getReden()));\n                    lst.add(doc);\n                }\n            }\n\n            document.append(\"tagesordnungspunkts\",lst);\n            protocols.insertOne(document);\n\n\n\n\n    }\n\n    /***\n     * in dieser Methode wird das Protocol, das bestimmten Parameter (sitzungsnumber) hat, aus der MongoDB gelöscht.\n     * @param sitzungsnumber\n     * @return\n     */\n    public long deleteProtocol(String sitzungsnumber){\n        MongoCollection<Document> collection = database.getCollection(\"protocol\");\n        DeleteResult result;\n        result = collection.deleteOne(new Document(\"sitzungsnumber\", sitzungsnumber));\n        return result.getDeletedCount();\n\n\n\n    }\n\n    /***\n     * in dieser Methode wird das Protocol, das bestimmten Parameter (sitzungsnumber) hat, aus der MongoDB gelesen.\n     * @param sitzungsnumber\n     * @return\n     * @throws Exception\n     */\n    public Protokoll readProtocol(String sitzungsnumber) throws Exception{\n        MongoCollection<Document> collection = database.getCollection(\"protocol\");\n        Document doc;\n        FindIterable<Document> itr;\n        itr = collection.find(new Document(\"sitzungsnumber\", sitzungsnumber));\n        MongoCursor<Document> cursor = itr.iterator();\n        if(cursor.hasNext()){\n            Protokoll p = new Protokoll_File_Impl();\n            ArrayList<Tagesordnungspunkt> tlist = new ArrayList<>();\n            List<Document> lstdocument;\n            doc = cursor.next();\n            String titel = (String) doc.get(\"titel\");\n            String datum = (String) doc.get(\"datum\");\n            if(doc.get(\"tagesordnungspunkts\") instanceof List<?>) {\n                lstdocument = (List<Document>) doc.get(\"tagesordnungspunkts\");\n                tlist = tagesordnungspunktList(lstdocument, p);\n                //System.out.println(\"tagescount : \"+ tlist.size());\n            }\n            else {\n                throw new Exception(\"error\");\n            }\n            p.setSitzungsnumber(sitzungsnumber);\n            p.setTagesordnungspunkts(tlist);\n            p.setTitel(titel);\n            p.setDatum(datum);\n            return p;\n\n        }\n        else {\n            return null;\n        }\n\n    }\n\n    /***\n     * in dieser Methode werden alle Protokolle aus der MongoDB gelesen.\n     * @return\n     */\n    public ArrayList<Protokoll> readAllProtocolsfromMongo() {\n        MongoCollection<Document> collection = database.getCollection(\"protocol\");\n        Document doc;\n        FindIterable<Document> itr;\n        itr = collection.find();\n        MongoCursor<Document> cursor = itr.iterator();\n        String sitzungsnumber;\n        Protokoll protokoll;\n        ArrayList<Protokoll> protokolls = new ArrayList<>();\n        int i = 0;\n        while (cursor.hasNext() && i <1 ) {\n            doc = cursor.next();\n            sitzungsnumber = doc.getString(\"sitzungsnumber\");\n            try {\n                System.out.println(\"sitzungsnumber : \" + sitzungsnumber);\n                protokoll = readProtocol(sitzungsnumber);\n                System.out.println(protokoll.getSitzungsnumber());\n                protokolls.add(protokoll);\n\n            } catch (Exception e) {\n                e.printStackTrace();\n            }\n            i++;\n\n        }\n        return protokolls;\n    }\n\n    /***\n     * In dieser Methode werden die Tagesordnungspunkten als Arraylist erstellt, um die Protokolle einfacher zu lesen.\n     * @param tageslist\n     * @param protokoll\n     * @return\n     */\n\n    private ArrayList<Tagesordnungspunkt> tagesordnungspunktList(List<Document> tageslist, Protokoll protokoll) {\n        ArrayList<Tagesordnungspunkt> tlist = new ArrayList<>();\n        String topid;\n        List<Document> redendoclist;\n        Tagesordnungspunkt t;\n        for(Document d : tageslist){\n            topid = (String) d.get(\"topid\");\n            redendoclist = (List<Document>) d.get(\"reden\");\n            t = new Tagesordnungspunkt();\n            t.setTopid(topid);\n            t.setReden(buildredelist(redendoclist , t));\n            t.setProtokoll(protokoll);\n            tlist.add(t);\n        }\n        return tlist;\n\n    }\n\n    /***\n     * In dieser Methode werden die Redetext als Arraylist erstellt, um die Protokolle einfacher zu lesen.\n     * @param rededoclist\n     * @param tagesordnungspunkt\n     * @return\n     */\n    private ArrayList<Rede> buildredelist (List<Document> rededoclist, Tagesordnungspunkt tagesordnungspunkt) {\n        ArrayList<Rede> redelist = new ArrayList<>();\n        String id;\n        String rednerid;\n        List<Document> redetextdoclist;\n        List<String> redetextlist;\n        Rede r;\n        for(Document d : rededoclist) {\n            id = (String) d.get(\"id\");\n            rednerid = d.getString(\"rednerid\");\n            redetextlist = d.getList(\"redetext\",String.class);\n\n\n            r = new Rede();\n            r.setId(id);\n            r.setRedner(rednerMongoDBFile.readRedner(rednerid));\n            r.setRedetext(new ArrayList<>(redetextlist));\n            r.setTagesordnungspunkt(tagesordnungspunkt);\n            redelist.add(r);\n\n        }\n        return redelist;\n    }\n\n    /***\n     * in dieser Methode wird jede Redetext als Document erstellt, um die Protokolle zu lesen.\n     * @param reden\n     * @return\n     */\n    private List<Document> redelistdocument(List<Rede> reden) {\n        Document doc;\n        List<Document> lst = new ArrayList<>();\n        for(Rede r:reden) {\n            doc = new Document();\n            doc.append(\"id\",r.getId());\n            if(r.getRedner() != null){\n                doc.append(\"rednerid\", r.getRedner().getId());\n            }\n            else {\n                System.out.println(\"Rede : \"+ r.getId()+ \" Tages : \"+ r.getTagesordnungspunkt().getTopid()+ \"Protocol : \"+ r.getTagesordnungspunkt().getProtokoll().getSitzungsnumber());\n                doc.append(\"rednerid\", \"\");\n            }\n\n            doc.append(\"redetext\", r.getRedetext());\n            lst.add(doc);\n\n        }\n        return lst;\n\n    }\n\n}\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/database/Protokoll_MongoDB_Impl.java b/src/main/java/database/Protokoll_MongoDB_Impl.java
+--- a/src/main/java/database/Protokoll_MongoDB_Impl.java	(revision 7f137f192dfe31ef6f555603066e2173d949de06)
++++ b/src/main/java/database/Protokoll_MongoDB_Impl.java	(date 1639661211656)
+@@ -6,6 +6,7 @@
+ import com.mongodb.client.MongoCursor;
+ import com.mongodb.client.MongoDatabase;
+ import com.mongodb.client.result.DeleteResult;
++import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.constituent.S;
+ import implementation.Protokoll_File_Impl;
+ import implementation.Rede;
+ import implementation.Tagesordnungspunkt;
+@@ -129,8 +130,7 @@
+         String sitzungsnumber;
+         Protokoll protokoll;
+         ArrayList<Protokoll> protokolls = new ArrayList<>();
+-        int i = 0;
+-        while (cursor.hasNext() && i <1 ) {
++        while (cursor.hasNext() ) {
+             doc = cursor.next();
+             sitzungsnumber = doc.getString("sitzungsnumber");
+             try {
+@@ -142,7 +142,6 @@
+             } catch (Exception e) {
+                 e.printStackTrace();
+             }
+-            i++;
+ 
+         }
+         return protokolls;
+@@ -230,4 +229,33 @@
+ 
+     }
+ 
++    /***
++     * in dieser Methode wird der Rede, der bestimmten Parameter (redeid) hat, aus der MongoDB aktualisiert.
++     * @param rede
++     */
++    public void updateRede (Rede rede) {
++        MongoCollection<Document> collection = database.getCollection("protocol");
++        Document query = new Document("sitzungsnumber", rede.getTagesordnungspunkt().getProtokoll().getSitzungsnumber());
++        ArrayList<Document> listtages = new ArrayList<>();
++        Document tages = new Document("topid",rede.getTagesordnungspunkt().getTopid());
++        ArrayList<Document> listreden = new ArrayList<>();
++        Document rededoc = new Document("id", rede.getId());
++        tages.append("reden", listreden);
++        listreden.add(rededoc);
++        listtages.add(tages);
++        query.append("tagesordnungspunkts", listtages);
++        MongoCursor<Document> cursor = collection.find(query).iterator();
++        Document doc;
++        if (cursor.hasNext()){
++            doc = cursor.next();
++            List<String> redetext = doc.getList("redetext", String.class);
++            for(String s : redetext) {
++                System.out.println(s);
++            }
++        }
++        else {
++            System.out.println("rede not found");
++        }
++    }
++
+ }
+Index: src/main/java/Main.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>import abstractclasses.Protokoll;\nimport database.MongoDBConnectionHandler;\nimport de.tudarmstadt.ukp.dkpro.core.api.ner.type.NamedEntity;\nimport de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence;\nimport de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;\nimport implementation.*;\nimport database.*;\nimport org.apache.uima.UIMAException;\nimport org.apache.uima.analysis_engine.AnalysisEngine;\nimport org.apache.uima.cas.CAS;\nimport org.apache.uima.cas.impl.XCASSerializer;\nimport org.apache.uima.fit.factory.AggregateBuilder;\nimport org.apache.uima.fit.factory.JCasFactory;\nimport org.apache.uima.fit.pipeline.SimplePipeline;\nimport org.apache.uima.fit.util.JCasUtil;\nimport org.apache.uima.jcas.JCas;\nimport org.bson.Document;\nimport org.hucompute.textimager.uima.gervader.GerVaderSentiment;\nimport org.hucompute.textimager.uima.spacy.SpaCyMultiTagger3;\nimport org.hucompute.textimager.uima.type.Sentiment;\nimport org.xml.sax.SAXException;\n\n\nimport java.io.ByteArrayOutputStream;\nimport java.io.IOException;\nimport java.util.*;\n\nimport static org.apache.uima.fit.factory.AnalysisEngineFactory.createEngineDescription;\n\n\n/***\n\n * die Location Path von den xml files wird von dem User in dem Class Main angefordert und\n * um dieser Folder zu lesen wird Class Main mithilfe der implementation.Plenarsitzung Class gearbeitet.\n * Die Methode, die den angeforderten Job ausführt, wird basierend auf der bereitgestellten Eingabe aufgerufen.\n * Nach Eingabe des Benutzers kann Main auch mit MongoDB verbunden und\n * Operationen(Delete, Insert, Update, Read) mit MongoDB ausgeführt werden.\n * Wenn der User einen falschen Input eingibt, dann wird von dem User noch Mal neue Input angefordert\n *\n *\n */\npublic class Main {\n    public static Plenarsitzung plenarsitzung;\n    public static Scanner input;\n    public static MongoDBConnectionHandler db;\n\n    public static void main(String[] args) {\n        try {\n            //JCasDeneme();\n            db = new MongoDBConnectionHandler();\n            MyJCas();\n            System.exit(0);\n            input = new Scanner(System.in);\n            String folderlocation = \"xmlfiles\";\n            System.out.println(\"Enter xmlfilespath : \");\n            //folderlocation = input.nextLine();\n            //plenarsitzung = new Plenarsitzung(folderlocation);\n            plenarsitzung = new Plenarsitzung(\"/home/gbatil/Downloads/xmlfiles\");\n\n            //plenarsitzung = new Plenarsitzung(folderlocation);\n            System.out.println(\"reading from Files...\");\n            plenarsitzung.build();\n            int choice;\n            while (true) {\n                System.out.println(\"Enter 1 : Redners\");\n                System.out.println(\"Enter 2 : Abgeordnete\");\n                System.out.println(\"Enter 3 : Fraktion Redners\");\n                System.out.println(\"Enter 4 : Protokoll Tagesordunungpunkttexts\");\n                System.out.println(\"Enter 5 : MongoDB test\");\n                System.out.println(\"Enter 6 : MongoDB insert all collection\");\n                System.out.println(\"Enter 7 : MongoDB remove all collection\");\n                System.out.println(\"Enter 8 : Show MongoDB Protocol\");\n                System.out.println(\"Enter 9 : CasObjeckt + Pipeline\");\n                System.out.println(\"Enter 10 : Exit\");\n                System.out.println();\n                System.out.print(\"Enter your choice : \");\n                choice = input.nextInt();\n                input.nextLine();\n                if (choice == 1) {\n                    printRedners();\n                }\n                else if (choice == 2) {\n                    printAbgeordnete();\n                }\n                else if (choice == 3) {\n                    printFraktionRedners();\n                }\n                else if (choice == 4) {\n                    printProtokollTagesordunungpunkttexts();\n                }\n                else if (choice == 5) {\n                    MongodbTest();\n                }\n                else if (choice == 6) {\n                    MongodbInsertAllCollections();\n                }\n                else if (choice == 7) {\n                    MongodbDeleteAllCollections();\n                }\n                else if (choice == 8) {\n                    MongoShowProtocol();\n                    //MongoShowRedner();\n                }\n                else if (choice == 9) {\n                    MyJCas();\n                }\n\n                else if (choice == 10){\n                    break;\n                }\n                else {\n                    System.out.println(\"InValid Choice\");\n                }\n\n            }\n\n        } catch (Exception exp) {\n            //System.out.println(exp.getClass().getName() +\" : \"+ exp.getMessage());\n            exp.printStackTrace();\n        }\n    }\n\n    /***\n     * dieser Methode wird darstellt, um die Redner auszudrucken\n     */\n    public static void printRedners() {\n        plenarsitzung.printAllRedners();\n\n    }\n\n    /***\n     * dieser Methode wird darstellt, um die Abgeordnete auszudrucken\n     */\n    public static void printAbgeordnete() {\n        plenarsitzung.printAllAbgeordnete();\n\n    }\n\n    /***\n     * die Methode wird Informationen darüber, welcher Sprecher zu welcher Partei gehört geprint\n     */\n    public static void printFraktionRedners() {\n        plenarsitzung.printAllFraktionRedners();\n\n    }\n\n    /***\n     * der Methode, der der Text von einem gewählten Tagesordnungspunkt ausgedruckt wird.\n     */\n    public static void printProtokollTagesordunungpunkttexts() {\n        String situngsnumber;\n        String tagesornungspunktnumber;\n        System.out.println(\"Enter situngsnumber : \");\n        situngsnumber = input.nextLine();\n        System.out.println(\"Enter tagesornungspunktnumber : \");\n        tagesornungspunktnumber = input.nextLine();\n        plenarsitzung.printProtokollTagesordnungspunkt(situngsnumber, tagesornungspunktnumber.trim());\n\n    }\n\n    /***\n     * die Methode wird  das Erstellen,\n     * Lesen, Updaten und Löschen von Dokumenten in der MongoDB getestet.\n     */\n    public static void MongodbTest(){\n\n        Redner_MonngoDB_File_Impl rmongo = new Redner_MonngoDB_File_Impl(db);\n        Protokoll_MongoDB_Impl pmongo = new Protokoll_MongoDB_Impl(db);\n\n        System.out.println(\"11000616 idli redner bilgileri :\");\n        Redner r = rmongo.readRedner(\"11000616\");\n        if (r!=null){\n            System.out.println(r.getId()+\" \"+r.getTitel()+\" \"+r.getVorname()+\" \"+ r.getNachname());\n        }\n        else {\n            System.out.println(\"bulunamadi\");\n        }\n        long DeleteCount = rmongo.deleteRedner(\"11000616\");\n        if(DeleteCount > 0) {\n            System.out.println(DeleteCount + \" Kayit silindi .....\");\n        }\n        else {\n            System.out.println(DeleteCount + \" 11000616 Kayit yok .....\");\n        }\n\n        r= new Redner();\n        r.setId(\"11001938\");\n        r.setTitel(\"Dr.\");\n        r.setVorname(\"Wolfgang\");\n        r.setNachname(\"Schäuble\");\n        rmongo.updateRedner(r);\n        Redner r2 = rmongo.readRedner(\"11001938\");\n        if (r2!=null){\n            System.out.println(r2.getId()+\" \"+r2.getTitel()+\" \"+r2.getVorname()+\" \"+ r2.getNachname());\n        }\n        else {\n            System.out.println(\"bulunamadi\");\n        }\n\n\n        DeleteCount = pmongo.deleteProtocol(\"221\");\n        if(DeleteCount > 0) {\n            System.out.println(DeleteCount + \" 221 nolu Protokol silindi .....\");\n        }\n        else {\n            System.out.println(DeleteCount + \" 221 nolu Protokol yok .....\");\n        }\n        try {\n\n            Protokoll prt = pmongo.readProtocol(\"197\");\n            if (prt!=null){\n                PrintProtocol(prt);\n            }\n            else {\n                System.out.println(\" 197 nolu Protokol yok .....\");\n            }\n\n\n        }\n        catch (Exception exp) {\n            exp.printStackTrace();\n        }\n\n\n\n\n\n\n\n\n    }\n\n\n    /***\n     * Diese Methode wird die Redner aus der MongoDB Databank gelesen und rufen wir PrintRedner Methode auf ,\n     * um die Redner auszudrucken.\n     *\n     * @throws Exception\n     */\n    public static void MongoShowRedner() throws Exception {\n        ArrayList<Redner> redners = new ArrayList<>();\n\n        Redner_MonngoDB_File_Impl rmongo = new Redner_MonngoDB_File_Impl(db);\n        redners = rmongo.readAllRednersfromMongo();\n        for(Redner r: redners){\n            PrintRedner(r);\n        }\n\n    }\n\n    /***\n     * Diese Methode wird die Protocols aus der MongoDB Databank gelesen und ausgedruckt.\n     * @throws Exception\n     */\n    public static void MongoShowProtocol() throws Exception {\n        System.out.println(\"Enter sitzungsnumber : \");\n        String sitzungsnumber = input.nextLine();\n        Protokoll_MongoDB_Impl pmongo = new Protokoll_MongoDB_Impl(db);\n        Protokoll p = pmongo.readProtocol(sitzungsnumber);\n        PrintProtocol(p);\n    }\n\n    /***\n     * Diese Methode ist eine  HilfsMethode. Wir verwenden sie, um die Redner auszudrucken.\n     * @param r\n     */\n    public static void PrintRedner(Redner r) {\n        if(r!=null) {\n            System.out.println(r.getId()+ \" \"+ r.getTitel()+ \" \"+ r.getVorname()+\" \"+ r.getNachname());\n        }\n    }\n\n    /***\n     * Diese Methode ist eine HilfsMethode. Wir verwenden sie, um die Protocols auszudrucken.\n     * @param p\n     */\n    public static void PrintProtocol(Protokoll p) {\n        if(p!=null) {\n            System.out.println(p.getSitzungsnumber()+ \" \"+p.getTitel()+ \" \"+ p.getDatum());\n            for (Tagesordnungspunkt t : p.getTagesordnungspunkts()) {\n                System.out.println(t.getTopid());\n                if (t.getReden() != null) {\n                    for(Rede r : t.getReden()) {\n                        if(r.getRedner() != null){\n                            System.out.println(r.getId()+ \" Redner : \"+ r.getRedner().getId()+ \" \"+ r.getRedner().getTitel()+ \" \"+ r.getRedner().getVorname()+ \" \"+ r.getRedner().getNachname());\n                        }\n                        else {\n                            System.out.println(r.getId());\n                        }\n\n                        for(String s: r.getRedetext()){\n                            System.out.println(s);\n                        }\n                        System.out.println(\"---------------------------------------\");\n                    }\n                }\n\n                System.out.println(\"+++++++++++++++++++++++++++++++++++++++++++\");\n            }\n        }\n\n    }\n\n    /***\n     * diese Methode wird sich von CLass Redner_MonngoDB_File_Impl und CLass Protokoll_MongoDB_Impl zu Nutze gemacht.\n     * Sie wird die Collections (Redner und Protokolle) zu MongoDB Databank eingefügt.\n     */\n\n    public static void MongodbInsertAllCollections(){\n        Redner_MonngoDB_File_Impl rmongo = new Redner_MonngoDB_File_Impl(db);\n        Protokoll_MongoDB_Impl pmongo = new Protokoll_MongoDB_Impl(db);\n        db.CreateCollections();\n        HashMap<String, Redner> rednerMap = plenarsitzung.getRednerMap();\n        Iterator<String> itr = rednerMap.keySet().iterator();\n        String rednerid;\n        Redner redner;\n        while (itr.hasNext()){\n            rednerid = itr.next();\n            redner = rednerMap.get(rednerid);\n            rmongo.insertRedner(redner);\n        }\n        System.out.println(\"die Redner werden hinzugefügt......\");\n        ArrayList<Protokoll> plist = plenarsitzung.getProtokollList();\n        for (int i = 0;i<plist.size();i++){\n            try {\n                System.out.println((i+1)+ \" Protocol : \"+ plist.get(i).getSitzungsnumber());\n                pmongo.insertProtocol(plist.get(i));\n            }\n           catch (Exception exp){\n               System.out.println(\" Error in Protocol : \"+ plist.get(i).getSitzungsnumber());\n                exp.printStackTrace();\n           }\n\n        }\n        System.out.println(\"die Protokolle werden hinzugefügt......\");\n\n\n\n\n\n\n    }\n\n    /***\n     * diese Methode löscht die Collections aus der Databank.\n     */\n    public static void MongodbDeleteAllCollections(){\n        db.DeleteCollections();\n\n\n    }\n\n    /***\n     * In der Methode werden die Protocols mithilfe der Methode readAllProtocolsfromMongo aus der KLasse Protokoll_MongoDB_Impl gelesen.\n     * Dann entsteht eine CAS Objects aus jeder Redetext aus der Protokolle, danach werden Sie in der jCaslist eingefügt.\n     *  Mit der for-Schleife können Inhalte der jCaslist durchlaufen. Jede CAS Objects aus der Liste wird mit Pipline ausgepackt.\n     * @throws UIMAException\n     */\n    public static void MyJCas( ) throws UIMAException{\n        Protokoll_MongoDB_Impl pmongo = new Protokoll_MongoDB_Impl(db);\n        ArrayList<Protokoll> protokolls = pmongo.readAllProtocolsfromMongo();\n        System.out.println(\"die Protokolle werden hinzugefügt......\");\n        ArrayList<JCas> jCaslist = new ArrayList<>();\n        StringBuilder sb;\n        JCas jCas;\n        int count = 0;\n        boolean exit = false;\n\n        for(Protokoll p: protokolls){\n            for (Tagesordnungspunkt t: p.getTagesordnungspunkts()){\n                for(Rede r : t.getReden()){\n                    count++;\n                    sb = new StringBuilder();\n                    for(String s: r.getRedetext()){\n                        sb.append(s);\n                    }\n                    jCas = toCas(sb.toString());\n                    //jCas = toCas(\" Dies ist eine Text. Ich gehe nach Hause und dann trinke ich ein Kaffee.\");\n                    jCaslist.add(jCas);\n                    //System.out.println(sb.toString());\n                    if(count> 3){\n                        exit = true; //tüm redeleri jcas a cevirmek icin bu satiri commentle\n                        break;\n                    }\n\n                }\n                if(exit){\n                    break;\n                }\n            }\n            if(exit){\n                break;\n            }\n        }\n        System.out.println(\"redecount : \"+count);\n\n        AggregateBuilder builder = new AggregateBuilder();\n        builder.add(createEngineDescription(SpaCyMultiTagger3.class,\n                SpaCyMultiTagger3.PARAM_REST_ENDPOINT, \"http://spacy.prg2021.texttechnologylab.org\"));\n        builder.add(createEngineDescription(GerVaderSentiment.class,\n                GerVaderSentiment.PARAM_REST_ENDPOINT, \"http://gervader.prg2021.texttechnologylab.org\",\n                GerVaderSentiment.PARAM_SELECTION , \"text,de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence\"));\n        AnalysisEngine pAE = builder.createAggregate();\n        int i = 1;\n        for(JCas j: jCaslist) {\n            System.out.println(\"######################################    \"+ i + \"   ###########################################\");\n            SimplePipeline.runPipeline(j, pAE);\n            PrintJCasInfo(j);\n            //System.out.println(getXml(j));\n            i++;\n            //break;\n        }\n\n\n\n\n    }\n\n    /***\n     * Dank des Pipelines wird jede CAS Obeckt dem Xml-String serialisiert.\n     * @param jCas\n     * @return\n     */\n    public static String getXml(JCas jCas){\n        CAS cas = jCas.getCas();\n        ByteArrayOutputStream outTmp = new ByteArrayOutputStream();\n        try {\n            XCASSerializer.serialize(cas, outTmp);\n        } catch (IOException |SAXException e) {\n            e.printStackTrace();\n        }\n        String xml = outTmp.toString();\n        return xml;\n\n    }\n\n    /***\n     * die Methode JCAS wird toCas Methode erweitert.\n     * Hier erstellen wir also der Text aus Redetext aus der Databank.\n     * @param text\n     * @return\n     * @throws UIMAException\n     */\n    public static JCas toCas(String text) throws UIMAException{\n        return JCasFactory.createText(text, \"de\");\n    }\n\n    /***\n     * Diese Methode erstellt aus der JCas Object Sentence, Tokens, NameEntity und Sentiment.\n     * @param jCas\n     */\n    public static void PrintJCasInfo(JCas jCas) {\n        Collection<Sentence> sentences = JCasUtil.select(jCas, Sentence.class);\n\n        for (Sentence sentence: sentences) {\n            System.out.println(\"Sentence :\" + sentence.getCoveredText());\n\n            Collection<Token> tokens = JCasUtil.selectCovered(Token.class, sentence);\n\n            for(Token token : JCasUtil.select(jCas, Token.class)) {\n                System.out.println(\"Tokens : \" + token.getCoveredText());\n                System.out.println(token.getPosValue());\n            }\n\n            for(NamedEntity entity : JCasUtil.select(jCas, NamedEntity.class)) {\n                System.out.println(\"Entity:  \"+ entity.getCoveredText()+ \" Value : \"+ entity.getValue());\n                if(entity.getValue().equals(\"PER\")) {\n                    System.out.println(\"Person\" + entity.getCoveredText() );\n                }\n                else {\n                    System.out.println(\"Location : \"+ entity.getCoveredText());\n                }\n            }\n        }\n        for(Sentence sentence : JCasUtil.select(jCas, Sentence.class)) {\n            System.out.println(sentence.getCoveredText());\n            for (Sentiment sentiment :  JCasUtil.selectCovered(Sentiment.class, sentence)) {\n                System.out.println(\"Sentiment : \"+ sentiment.getSentiment());\n            }\n        }\n\n    }\n    public static void JCasDeneme() throws UIMAException {\n\n        JCas jCas = JCasFactory.createText(\" Dies ist eine Text. Ich gehe nach Hause und dann trinke ich ein Kaffee.Wir treffen uns ins Kino. Ich gehe in die Schule.\", \"de\");\n\n        AggregateBuilder builder = new AggregateBuilder();\n        builder.add(createEngineDescription(SpaCyMultiTagger3.class,\n                SpaCyMultiTagger3.PARAM_REST_ENDPOINT, \"http://spacy.prg2021.texttechnologylab.org\"));\n        builder.add(createEngineDescription(GerVaderSentiment.class,\n                GerVaderSentiment.PARAM_REST_ENDPOINT, \"http://gervader.prg2021.texttechnologylab.org\",\n                GerVaderSentiment.PARAM_SELECTION , \"text,de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence\"));\n        AnalysisEngine pAE = builder.createAggregate();\n        SimplePipeline.runPipeline(jCas, pAE);\n        String xml = getXml(jCas);\n        System.out.println(xml);\n\n\n        /*Collection<Sentence> sentences = JCasUtil.select(jCas, Sentence.class);\n\n        for (Sentence sentence: sentences) {\n            System.out.println(\"Sentence :\" + sentence.getCoveredText());\n\n            Collection<Token> tokens = JCasUtil.selectCovered(Token.class, sentence);\n\n            for(Token token : JCasUtil.select(jCas, Token.class)) {\n                System.out.println(\"Tokens : \" + token.getCoveredText());\n                System.out.println(token.getPosValue());\n            }\n\n            for(NamedEntity entity : JCasUtil.select(jCas, NamedEntity.class)) {\n                System.out.println(\"Entity:  \"+ entity.getCoveredText()+ \" Value : \"+ entity.getValue());\n                if(entity.getValue().equals(\"PER\")) {\n                    //System.out.println(\"Person\" + entity.getCoveredText() );\n                }\n                else {\n                    //System.out.println(\"Location : \"+ entity.getCoveredText());\n                }\n            }\n        }\n        for(Sentence sentence : JCasUtil.select(jCas, Sentence.class)) {\n            System.out.println(sentence.getCoveredText());\n            for (Sentiment sentiment :  JCasUtil.selectCovered(Sentiment.class, sentence)) {\n                System.out.println(\"Sentiment : \"+ sentiment.getSentiment());\n            }\n        }\n*/\n\n    }\n\n\n\n}\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/Main.java b/src/main/java/Main.java
+--- a/src/main/java/Main.java	(revision 7f137f192dfe31ef6f555603066e2173d949de06)
++++ b/src/main/java/Main.java	(date 1639662959488)
+@@ -46,10 +46,10 @@
+ 
+     public static void main(String[] args) {
+         try {
+-            //JCasDeneme();
+             db = new MongoDBConnectionHandler();
+-            MyJCas();
+-            System.exit(0);
++            //MyJCas();
++
++            //System.exit(0);
+             input = new Scanner(System.in);
+             String folderlocation = "xmlfiles";
+             System.out.println("Enter xmlfilespath : ");
+@@ -166,22 +166,27 @@
+ 
+         Redner_MonngoDB_File_Impl rmongo = new Redner_MonngoDB_File_Impl(db);
+         Protokoll_MongoDB_Impl pmongo = new Protokoll_MongoDB_Impl(db);
+-
+-        System.out.println("11000616 idli redner bilgileri :");
++        System.out.println("Test über readRedner :");
++        System.out.println("Redner ( 11000616 redenid ) Informationen :");
+         Redner r = rmongo.readRedner("11000616");
+         if (r!=null){
+             System.out.println(r.getId()+" "+r.getTitel()+" "+r.getVorname()+" "+ r.getNachname());
+         }
+         else {
+-            System.out.println("bulunamadi");
++            System.out.println("der Redner existiert nicht");
+         }
++        System.out.println("Test über deleteRedner :");
++        System.out.println("Löscht Redner rednerid : 11000616");
+         long DeleteCount = rmongo.deleteRedner("11000616");
+         if(DeleteCount > 0) {
+-            System.out.println(DeleteCount + " Kayit silindi .....");
++            System.out.println(DeleteCount + " der Eintrag Redner wird gelöscht..........");
+         }
+         else {
+-            System.out.println(DeleteCount + " 11000616 Kayit yok .....");
++            System.out.println(DeleteCount + " 11000616 id Eintrag existiert nicht");
+         }
++        System.out.println("Test über Update redner : ");
++        System.out.println(" Bsp : Wir aktualisieren nur die Titel ");
++
+ 
+         r= new Redner();
+         r.setId("11001938");
+@@ -194,25 +199,27 @@
+             System.out.println(r2.getId()+" "+r2.getTitel()+" "+r2.getVorname()+" "+ r2.getNachname());
+         }
+         else {
+-            System.out.println("bulunamadi");
++            System.out.println("der Eintrag existiert nicht.........");
+         }
+ 
+-
++        System.out.println("Test über Delete Protocol");
++        System.out.println("Löscht 221 Protocol");
+         DeleteCount = pmongo.deleteProtocol("221");
+         if(DeleteCount > 0) {
+-            System.out.println(DeleteCount + " 221 nolu Protokol silindi .....");
++            System.out.println(DeleteCount + " 221 Protokoll wird gelöscht......");
+         }
+         else {
+-            System.out.println(DeleteCount + " 221 nolu Protokol yok .....");
++            System.out.println(DeleteCount + " 221 Protokoll existiert nicht....");
+         }
+         try {
+-
++            System.out.println("Test über Read Protocol ");
++            System.out.println("Read 197 Protokoll");
+             Protokoll prt = pmongo.readProtocol("197");
+             if (prt!=null){
+                 PrintProtocol(prt);
+             }
+             else {
+-                System.out.println(" 197 nolu Protokol yok .....");
++                System.out.println("197 Protokoll existiert nicht....");
+             }
+ 
+ 
+@@ -348,6 +355,7 @@
+         db.DeleteCollections();
+ 
+ 
++
+     }
+ 
+     /***
+@@ -360,37 +368,39 @@
+         Protokoll_MongoDB_Impl pmongo = new Protokoll_MongoDB_Impl(db);
+         ArrayList<Protokoll> protokolls = pmongo.readAllProtocolsfromMongo();
+         System.out.println("die Protokolle werden hinzugefügt......");
+-        ArrayList<JCas> jCaslist = new ArrayList<>();
+         StringBuilder sb;
+         JCas jCas;
+         int count = 0;
+         boolean exit = false;
++        ArrayList<RedeJcas> redejcaslist = new ArrayList<>();
++        RedeJcas rj;
+ 
+         for(Protokoll p: protokolls){
+             for (Tagesordnungspunkt t: p.getTagesordnungspunkts()){
+                 for(Rede r : t.getReden()){
++
+                     count++;
+                     sb = new StringBuilder();
+                     for(String s: r.getRedetext()){
+                         sb.append(s);
+                     }
+                     jCas = toCas(sb.toString());
+-                    //jCas = toCas(" Dies ist eine Text. Ich gehe nach Hause und dann trinke ich ein Kaffee.");
+-                    jCaslist.add(jCas);
+                     //System.out.println(sb.toString());
++                    rj = new RedeJcas(r,jCas);
++                    redejcaslist.add(rj);
+                     if(count> 3){
+-                        exit = true; //tüm redeleri jcas a cevirmek icin bu satiri commentle
++                        //exit = true; //tüm redeleri jcas a cevirmek icin bu satiri commentle
+                         break;
+                     }
+ 
+                 }
+-                if(exit){
+-                    break;
+-                }
+-            }
+-            if(exit){
+-                break;
++                //if(exit){
++                    //break;
++                //}
+             }
++            //if(exit){
++                //break;
++            //}
+         }
+         System.out.println("redecount : "+count);
+ 
+@@ -401,12 +411,16 @@
+                 GerVaderSentiment.PARAM_REST_ENDPOINT, "http://gervader.prg2021.texttechnologylab.org",
+                 GerVaderSentiment.PARAM_SELECTION , "text,de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence"));
+         AnalysisEngine pAE = builder.createAggregate();
++
++        JCas_MongoDB_Impl jmongo = new JCas_MongoDB_Impl(db);
++
+         int i = 1;
+-        for(JCas j: jCaslist) {
++        for(RedeJcas rjs : redejcaslist) {
+             System.out.println("######################################    "+ i + "   ###########################################");
+-            SimplePipeline.runPipeline(j, pAE);
+-            PrintJCasInfo(j);
++            SimplePipeline.runPipeline(rjs.getJcas(), pAE);
++            //PrintJCasInfo(j);
+             //System.out.println(getXml(j));
++            jmongo.InsertJcasXml(getXml(rjs.getJcas()),rjs.getRede());
+             i++;
+             //break;
+         }
+@@ -480,53 +494,8 @@
+         }
+ 
+     }
+-    public static void JCasDeneme() throws UIMAException {
+-
+-        JCas jCas = JCasFactory.createText(" Dies ist eine Text. Ich gehe nach Hause und dann trinke ich ein Kaffee.Wir treffen uns ins Kino. Ich gehe in die Schule.", "de");
+-
+-        AggregateBuilder builder = new AggregateBuilder();
+-        builder.add(createEngineDescription(SpaCyMultiTagger3.class,
+-                SpaCyMultiTagger3.PARAM_REST_ENDPOINT, "http://spacy.prg2021.texttechnologylab.org"));
+-        builder.add(createEngineDescription(GerVaderSentiment.class,
+-                GerVaderSentiment.PARAM_REST_ENDPOINT, "http://gervader.prg2021.texttechnologylab.org",
+-                GerVaderSentiment.PARAM_SELECTION , "text,de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence"));
+-        AnalysisEngine pAE = builder.createAggregate();
+-        SimplePipeline.runPipeline(jCas, pAE);
+-        String xml = getXml(jCas);
+-        System.out.println(xml);
+-
+-
+-        /*Collection<Sentence> sentences = JCasUtil.select(jCas, Sentence.class);
+-
+-        for (Sentence sentence: sentences) {
+-            System.out.println("Sentence :" + sentence.getCoveredText());
+-
+-            Collection<Token> tokens = JCasUtil.selectCovered(Token.class, sentence);
+-
+-            for(Token token : JCasUtil.select(jCas, Token.class)) {
+-                System.out.println("Tokens : " + token.getCoveredText());
+-                System.out.println(token.getPosValue());
+-            }
+-
+-            for(NamedEntity entity : JCasUtil.select(jCas, NamedEntity.class)) {
+-                System.out.println("Entity:  "+ entity.getCoveredText()+ " Value : "+ entity.getValue());
+-                if(entity.getValue().equals("PER")) {
+-                    //System.out.println("Person" + entity.getCoveredText() );
+-                }
+-                else {
+-                    //System.out.println("Location : "+ entity.getCoveredText());
+-                }
+-            }
+-        }
+-        for(Sentence sentence : JCasUtil.select(jCas, Sentence.class)) {
+-            System.out.println(sentence.getCoveredText());
+-            for (Sentiment sentiment :  JCasUtil.selectCovered(Sentiment.class, sentence)) {
+-                System.out.println("Sentiment : "+ sentiment.getSentiment());
+-            }
+-        }
+-*/
+-
+-    }
++
++
+ 
+ 
+ 
+Index: .idea/workspace.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<project version=\"4\">\n  <component name=\"AutoImportSettings\">\n    <option name=\"autoReloadType\" value=\"SELECTIVE\" />\n  </component>\n  <component name=\"ChangeListManager\">\n    <list default=\"true\" id=\"e1156904-ce1d-4ad2-963a-0043eea1bf13\" name=\"Changes\" comment=\"3\">\n      <change beforePath=\"$PROJECT_DIR$/.idea/workspace.xml\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/.idea/workspace.xml\" afterDir=\"false\" />\n      <change beforePath=\"$PROJECT_DIR$/src/main/java/Main.java\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/src/main/java/Main.java\" afterDir=\"false\" />\n      <change beforePath=\"$PROJECT_DIR$/target/classes/Main.class\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/target/classes/Main.class\" afterDir=\"false\" />\n    </list>\n    <option name=\"SHOW_DIALOG\" value=\"false\" />\n    <option name=\"HIGHLIGHT_CONFLICTS\" value=\"true\" />\n    <option name=\"HIGHLIGHT_NON_ACTIVE_CHANGELIST\" value=\"false\" />\n    <option name=\"LAST_RESOLUTION\" value=\"IGNORE\" />\n  </component>\n  <component name=\"FileTemplateManagerImpl\">\n    <option name=\"RECENT_TEMPLATES\">\n      <list>\n        <option value=\"Class\" />\n      </list>\n    </option>\n  </component>\n  <component name=\"Git.Settings\">\n    <option name=\"RECENT_GIT_ROOT_PATH\" value=\"$PROJECT_DIR$\" />\n  </component>\n  <component name=\"JpbToolWindowState\">\n    <option name=\"myId2FirstActivated\">\n      <map>\n        <entry key=\"com.haulmont.jpb.jpaStructure\" value=\"true\" />\n      </map>\n    </option>\n    <option name=\"myId2Visible\">\n      <map>\n        <entry key=\"com.haulmont.jpb.jpaStructure\" value=\"false\" />\n      </map>\n    </option>\n  </component>\n  <component name=\"MarkdownSettingsMigration\">\n    <option name=\"stateVersion\" value=\"1\" />\n  </component>\n  <component name=\"ProjectId\" id=\"22EUd6IShAFu7L4NAq0G6K1Rkzt\" />\n  <component name=\"ProjectViewState\">\n    <option name=\"hideEmptyMiddlePackages\" value=\"true\" />\n    <option name=\"showLibraryContents\" value=\"true\" />\n  </component>\n  <component name=\"PropertiesComponent\">\n    <property name=\"RunOnceActivity.OpenProjectViewOnStart\" value=\"true\" />\n    <property name=\"RunOnceActivity.ShowReadmeOnStart\" value=\"true\" />\n    <property name=\"last_opened_file_path\" value=\"$PROJECT_DIR$/../uebung2\" />\n  </component>\n  <component name=\"RunManager\">\n    <configuration name=\"Main\" type=\"Application\" factoryName=\"Application\" temporary=\"true\" nameIsGenerated=\"true\">\n      <option name=\"MAIN_CLASS_NAME\" value=\"Main\" />\n      <module name=\"Uebung2\" />\n      <method v=\"2\">\n        <option name=\"Make\" enabled=\"true\" />\n      </method>\n    </configuration>\n    <recent_temporary>\n      <list>\n        <item itemvalue=\"Application.Main\" />\n      </list>\n    </recent_temporary>\n  </component>\n  <component name=\"SpellCheckerSettings\" RuntimeDictionaries=\"0\" Folders=\"0\" CustomDictionaries=\"0\" DefaultDictionary=\"application-level\" UseSingleDictionary=\"true\" transferred=\"true\" />\n  <component name=\"TaskManager\">\n    <task active=\"true\" id=\"Default\" summary=\"Default task\">\n      <changelist id=\"e1156904-ce1d-4ad2-963a-0043eea1bf13\" name=\"Changes\" comment=\"\" />\n      <created>1639402323465</created>\n      <option name=\"number\" value=\"Default\" />\n      <option name=\"presentableId\" value=\"Default\" />\n      <updated>1639402323465</updated>\n    </task>\n    <task id=\"LOCAL-00001\" summary=\"1\">\n      <created>1639402377250</created>\n      <option name=\"number\" value=\"00001\" />\n      <option name=\"presentableId\" value=\"LOCAL-00001\" />\n      <option name=\"project\" value=\"LOCAL\" />\n      <updated>1639402377250</updated>\n    </task>\n    <task id=\"LOCAL-00002\" summary=\"2\">\n      <created>1639403244428</created>\n      <option name=\"number\" value=\"00002\" />\n      <option name=\"presentableId\" value=\"LOCAL-00002\" />\n      <option name=\"project\" value=\"LOCAL\" />\n      <updated>1639403244428</updated>\n    </task>\n    <task id=\"LOCAL-00003\" summary=\"3\">\n      <created>1639404321495</created>\n      <option name=\"number\" value=\"00003\" />\n      <option name=\"presentableId\" value=\"LOCAL-00003\" />\n      <option name=\"project\" value=\"LOCAL\" />\n      <updated>1639404321495</updated>\n    </task>\n    <task id=\"LOCAL-00004\" summary=\"4\">\n      <created>1639424543193</created>\n      <option name=\"number\" value=\"00004\" />\n      <option name=\"presentableId\" value=\"LOCAL-00004\" />\n      <option name=\"project\" value=\"LOCAL\" />\n      <updated>1639424543194</updated>\n    </task>\n    <task id=\"LOCAL-00005\" summary=\"3\">\n      <created>1639619188466</created>\n      <option name=\"number\" value=\"00005\" />\n      <option name=\"presentableId\" value=\"LOCAL-00005\" />\n      <option name=\"project\" value=\"LOCAL\" />\n      <updated>1639619188466</updated>\n    </task>\n    <option name=\"localTasksCounter\" value=\"6\" />\n    <servers />\n  </component>\n  <component name=\"Vcs.Log.Tabs.Properties\">\n    <option name=\"TAB_STATES\">\n      <map>\n        <entry key=\"MAIN\">\n          <value>\n            <State />\n          </value>\n        </entry>\n      </map>\n    </option>\n  </component>\n  <component name=\"VcsManagerConfiguration\">\n    <MESSAGE value=\"1\" />\n    <MESSAGE value=\"2\" />\n    <MESSAGE value=\"4\" />\n    <MESSAGE value=\"5\" />\n    <MESSAGE value=\"6\" />\n    <MESSAGE value=\"3\" />\n    <option name=\"LAST_COMMIT_MESSAGE\" value=\"3\" />\n  </component>\n</project>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/workspace.xml b/.idea/workspace.xml
+--- a/.idea/workspace.xml	(revision 7f137f192dfe31ef6f555603066e2173d949de06)
++++ b/.idea/workspace.xml	(date 1639658725412)
+@@ -4,10 +4,17 @@
+     <option name="autoReloadType" value="SELECTIVE" />
+   </component>
+   <component name="ChangeListManager">
+-    <list default="true" id="e1156904-ce1d-4ad2-963a-0043eea1bf13" name="Changes" comment="3">
++    <list default="true" id="e1156904-ce1d-4ad2-963a-0043eea1bf13" name="Changes" comment="Merge remote-tracking branch 'origin/master'&#10;&#10;# Conflicts:&#10;#&#9;.idea/workspace.xml&#10;#&#9;src/main/java/Main.java&#10;#&#9;src/main/java/database/MongoDBConnectionHandler.java&#10;#&#9;target/classes/Main.class&#10;#&#9;target/classes/database/MongoDBConnectionHandler.class">
++      <change afterPath="$PROJECT_DIR$/src/main/java/database/JCas_MongoDB_Impl.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/src/main/java/implementation/RedeJcas.java" afterDir="false" />
+       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+       <change beforePath="$PROJECT_DIR$/src/main/java/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/Main.java" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/src/main/java/database/MongoDBConnectionHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/database/MongoDBConnectionHandler.java" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/src/main/java/database/Protokoll_MongoDB_Impl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/database/Protokoll_MongoDB_Impl.java" afterDir="false" />
+       <change beforePath="$PROJECT_DIR$/target/classes/Main.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/Main.class" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/target/classes/database/MongoDBConnectionHandler.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/database/MongoDBConnectionHandler.class" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/target/classes/database/Protokoll_MongoDB_Impl.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/database/Protokoll_MongoDB_Impl.class" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/target/classes/database/Redner_MonngoDB_File_Impl.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/database/Redner_MonngoDB_File_Impl.class" afterDir="false" />
+     </list>
+     <option name="SHOW_DIALOG" value="false" />
+     <option name="HIGHLIGHT_CONFLICTS" value="true" />
+@@ -47,7 +54,7 @@
+   <component name="PropertiesComponent">
+     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
+     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+-    <property name="last_opened_file_path" value="$PROJECT_DIR$/../uebung2" />
++    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+   </component>
+   <component name="RunManager">
+     <configuration name="Main" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+@@ -107,7 +114,35 @@
+       <option name="project" value="LOCAL" />
+       <updated>1639619188466</updated>
+     </task>
+-    <option name="localTasksCounter" value="6" />
++    <task id="LOCAL-00006" summary="3">
++      <created>1639619401758</created>
++      <option name="number" value="00006" />
++      <option name="presentableId" value="LOCAL-00006" />
++      <option name="project" value="LOCAL" />
++      <updated>1639619401759</updated>
++    </task>
++    <task id="LOCAL-00007" summary="5">
++      <created>1639619458506</created>
++      <option name="number" value="00007" />
++      <option name="presentableId" value="LOCAL-00007" />
++      <option name="project" value="LOCAL" />
++      <updated>1639619458506</updated>
++    </task>
++    <task id="LOCAL-00008" summary="Merge remote-tracking branch 'origin/master'&#10;&#10;# Conflicts:&#10;#&#9;.idea/workspace.xml&#10;#&#9;src/main/java/Main.java&#10;#&#9;src/main/java/database/MongoDBConnectionHandler.java&#10;#&#9;target/classes/Main.class&#10;#&#9;target/classes/database/MongoDBConnectionHandler.class">
++      <created>1639619617569</created>
++      <option name="number" value="00008" />
++      <option name="presentableId" value="LOCAL-00008" />
++      <option name="project" value="LOCAL" />
++      <updated>1639619617569</updated>
++    </task>
++    <task id="LOCAL-00009" summary="Merge remote-tracking branch 'origin/master'&#10;&#10;# Conflicts:&#10;#&#9;.idea/workspace.xml&#10;#&#9;src/main/java/Main.java&#10;#&#9;src/main/java/database/MongoDBConnectionHandler.java&#10;#&#9;target/classes/Main.class&#10;#&#9;target/classes/database/MongoDBConnectionHandler.class">
++      <created>1639619625586</created>
++      <option name="number" value="00009" />
++      <option name="presentableId" value="LOCAL-00009" />
++      <option name="project" value="LOCAL" />
++      <updated>1639619625586</updated>
++    </task>
++    <option name="localTasksCounter" value="10" />
+     <servers />
+   </component>
+   <component name="Vcs.Log.Tabs.Properties">
+@@ -125,9 +160,10 @@
+     <MESSAGE value="1" />
+     <MESSAGE value="2" />
+     <MESSAGE value="4" />
+-    <MESSAGE value="5" />
+     <MESSAGE value="6" />
+     <MESSAGE value="3" />
+-    <option name="LAST_COMMIT_MESSAGE" value="3" />
++    <MESSAGE value="5" />
++    <MESSAGE value="Merge remote-tracking branch 'origin/master'&#10;&#10;# Conflicts:&#10;#&#9;.idea/workspace.xml&#10;#&#9;src/main/java/Main.java&#10;#&#9;src/main/java/database/MongoDBConnectionHandler.java&#10;#&#9;target/classes/Main.class&#10;#&#9;target/classes/database/MongoDBConnectionHandler.class" />
++    <option name="LAST_COMMIT_MESSAGE" value="Merge remote-tracking branch 'origin/master'&#10;&#10;# Conflicts:&#10;#&#9;.idea/workspace.xml&#10;#&#9;src/main/java/Main.java&#10;#&#9;src/main/java/database/MongoDBConnectionHandler.java&#10;#&#9;target/classes/Main.class&#10;#&#9;target/classes/database/MongoDBConnectionHandler.class" />
+   </component>
+ </project>
+\ No newline at end of file
+Index: src/main/java/implementation/RedeJcas.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/implementation/RedeJcas.java b/src/main/java/implementation/RedeJcas.java
+new file mode 100644
+--- /dev/null	(date 1639661211644)
++++ b/src/main/java/implementation/RedeJcas.java	(date 1639661211644)
+@@ -0,0 +1,38 @@
++package implementation;
++
++import database.JCas_MongoDB_Impl;
++import org.apache.uima.jcas.JCas;
++
++/***
++ * Diese Klasse wurde erstellt, um die Verbindung zwischen Rede und JCas Objeckt nicht zu unterbrechen.
++ * und die KLasse enthält die Getter-Setter Methode von Rede und JCas Objeckt.
++ */
++
++public class RedeJcas {
++    private Rede rede;
++    private JCas jcas;
++
++    public RedeJcas() {
++    }
++
++    public RedeJcas(Rede rede, JCas jcas) {
++        this.rede = rede;
++        this.jcas = jcas;
++    }
++
++    public Rede getRede() {
++        return rede;
++    }
++
++    public void setRede(Rede rede) {
++        this.rede = rede;
++    }
++
++    public JCas getJcas() {
++        return jcas;
++    }
++
++    public void setJcas(JCas jcas) {
++        this.jcas = jcas;
++    }
++}
+Index: src/main/java/database/JCas_MongoDB_Impl.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/database/JCas_MongoDB_Impl.java b/src/main/java/database/JCas_MongoDB_Impl.java
+new file mode 100644
+--- /dev/null	(date 1639661728332)
++++ b/src/main/java/database/JCas_MongoDB_Impl.java	(date 1639661728332)
+@@ -0,0 +1,40 @@
++package database;
++
++import abstractclasses.Protokoll;
++import com.mongodb.client.FindIterable;
++import com.mongodb.client.MongoCollection;
++import com.mongodb.client.MongoCursor;
++import com.mongodb.client.MongoDatabase;
++import com.mongodb.client.result.DeleteResult;
++import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.constituent.S;
++import implementation.Protokoll_File_Impl;
++import implementation.Rede;
++import implementation.Tagesordnungspunkt;
++import org.bson.Document;
++import org.bson.types.ObjectId;
++
++import java.util.ArrayList;
++import java.util.List;
++
++/***
++ * In dieser KLasse wird das JcasXml, das die Informationen über eigene protokolid, topid , redeid hat, in der MongoDB eingefügt.
++ */
++
++public class JCas_MongoDB_Impl {
++    public MongoDBConnectionHandler mongoDBConnectionHandler;
++    private MongoDatabase database;
++
++    public  JCas_MongoDB_Impl(MongoDBConnectionHandler mongoDBConnectionHandler) {
++        this.mongoDBConnectionHandler = mongoDBConnectionHandler;
++        this.database = mongoDBConnectionHandler.getDatabase();
++    }
++    public void InsertJcasXml (String jcasxml, Rede rede) {
++        MongoCollection<Document> collection = database.getCollection("uima");
++        Document document = new Document("_id", new ObjectId());
++        document.append("sitzungsnumber", rede.getTagesordnungspunkt().getProtokoll().getSitzungsnumber());
++        document.append("tagesordnungspunkttopid", rede.getTagesordnungspunkt().getTopid());
++        document.append("redeid", rede.getId());
++        document.append("xml", jcasxml);
++        collection.insertOne(document);
++    }
++}
