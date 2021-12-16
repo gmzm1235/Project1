@@ -4,15 +4,14 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="e1156904-ce1d-4ad2-963a-0043eea1bf13" name="Changes" comment="Merge remote-tracking branch 'origin/master'&#10;&#10;# Conflicts:&#10;#&#9;.idea/workspace.xml&#10;#&#9;src/main/java/Main.java&#10;#&#9;src/main/java/database/MongoDBConnectionHandler.java&#10;#&#9;target/classes/Main.class&#10;#&#9;target/classes/database/MongoDBConnectionHandler.class">
-      <change afterPath="$PROJECT_DIR$/uml_02.pdf" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/usecase_2.1.pdf" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/usecase_2.2.pdf" afterDir="false" />
+    <list default="true" id="e1156904-ce1d-4ad2-963a-0043eea1bf13" name="Changes" comment="5">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/Main.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/database/Protokoll_MongoDB_Impl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/database/Protokoll_MongoDB_Impl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/database/Redner_MonngoDB_File_Impl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/database/Redner_MonngoDB_File_Impl.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/target/classes/Main.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/Main.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/database/JCas_MongoDB_Impl.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/database/JCas_MongoDB_Impl.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/target/classes/database/Protokoll_MongoDB_Impl.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/database/Protokoll_MongoDB_Impl.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/implementation/RedeJcas.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/implementation/RedeJcas.class" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -166,7 +165,35 @@
       <option name="project" value="LOCAL" />
       <updated>1639663481002</updated>
     </task>
-    <option name="localTasksCounter" value="13" />
+    <task id="LOCAL-00013" summary="3">
+      <created>1639668347486</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1639668347486</updated>
+    </task>
+    <task id="LOCAL-00014" summary="4">
+      <created>1639668356535</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1639668356535</updated>
+    </task>
+    <task id="LOCAL-00015" summary="4">
+      <created>1639668391164</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1639668391164</updated>
+    </task>
+    <task id="LOCAL-00016" summary="5">
+      <created>1639668421645</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1639668421645</updated>
+    </task>
+    <option name="localTasksCounter" value="17" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -184,11 +211,11 @@
     <option name="ADD_EXTERNAL_FILES_SILENTLY" value="true" />
     <MESSAGE value="1" />
     <MESSAGE value="2" />
-    <MESSAGE value="4" />
     <MESSAGE value="6" />
-    <MESSAGE value="3" />
-    <MESSAGE value="5" />
     <MESSAGE value="Merge remote-tracking branch 'origin/master'&#10;&#10;# Conflicts:&#10;#&#9;.idea/workspace.xml&#10;#&#9;src/main/java/Main.java&#10;#&#9;src/main/java/database/MongoDBConnectionHandler.java&#10;#&#9;target/classes/Main.class&#10;#&#9;target/classes/database/MongoDBConnectionHandler.class" />
-    <option name="LAST_COMMIT_MESSAGE" value="Merge remote-tracking branch 'origin/master'&#10;&#10;# Conflicts:&#10;#&#9;.idea/workspace.xml&#10;#&#9;src/main/java/Main.java&#10;#&#9;src/main/java/database/MongoDBConnectionHandler.java&#10;#&#9;target/classes/Main.class&#10;#&#9;target/classes/database/MongoDBConnectionHandler.class" />
+    <MESSAGE value="3" />
+    <MESSAGE value="4" />
+    <MESSAGE value="5" />
+    <option name="LAST_COMMIT_MESSAGE" value="5" />
   </component>
 </project>

@@ -14,6 +14,7 @@ import org.apache.uima.fit.factory.JCasFactory;
 import org.apache.uima.fit.pipeline.SimplePipeline;
 import org.apache.uima.fit.util.JCasUtil;
 import org.apache.uima.jcas.JCas;
+import org.apache.uima.resource.ResourceInitializationException;
 import org.bson.Document;
 import org.hucompute.textimager.uima.gervader.GerVaderSentiment;
 import org.hucompute.textimager.uima.spacy.SpaCyMultiTagger3;
@@ -47,21 +48,11 @@ public class Main {
     public static void main(String[] args) {
         try {
             db = new MongoDBConnectionHandler();
-            //MyJCas();
-
-            //System.exit(0);
+            Thread.sleep(500);
             input = new Scanner(System.in);
-            String folderlocation = "xmlfiles";
-            System.out.println("Enter xmlfilespath : ");
-            //folderlocation = input.nextLine();
-            //plenarsitzung = new Plenarsitzung(folderlocation);
-            plenarsitzung = new Plenarsitzung("/home/gbatil/Downloads/xmlfiles");
-
-            //plenarsitzung = new Plenarsitzung(folderlocation);
-            System.out.println("reading from Files...");
-            plenarsitzung.build();
             int choice;
             while (true) {
+                System.out.println("Enter 0 : Read all Xml Files");
                 System.out.println("Enter 1 : Redners");
                 System.out.println("Enter 2 : Abgeordnete");
                 System.out.println("Enter 3 : Fraktion Redners");
@@ -76,7 +67,18 @@ public class Main {
                 System.out.print("Enter your choice : ");
                 choice = input.nextInt();
                 input.nextLine();
-                if (choice == 1) {
+                if (choice == 0) {
+                    String folderlocation = "xmlfiles";
+                    System.out.println("Enter xmlfilespath : ");
+                    folderlocation = input.nextLine();
+                    plenarsitzung = new Plenarsitzung(folderlocation);
+                    //plenarsitzung = new Plenarsitzung("/home/gbatil/Downloads/xmlfiles");
+
+                    //plenarsitzung = new Plenarsitzung(folderlocation);
+                    System.out.println("reading from Files...");
+                    plenarsitzung.build();
+                }
+                else if (choice == 1) {
                     printRedners();
                 }
                 else if (choice == 2) {
@@ -364,9 +366,10 @@ public class Main {
      *  Mit der for-Schleife können Inhalte der jCaslist durchlaufen. Jede CAS Objects aus der Liste wird mit Pipline ausgepackt.
      * @throws UIMAException
      */
-    public static void MyJCas( ) throws UIMAException{
+    public static void MyJCas( ) throws UIMAException {
         Protokoll_MongoDB_Impl pmongo = new Protokoll_MongoDB_Impl(db);
-        ArrayList<Protokoll> protokolls = pmongo.readAllProtocolsfromMongo();
+        System.out.println("Reading sitzungsnumbers.......");
+        ArrayList<String> sitzungsnumbers = pmongo.readAllProtocolssitzungsnumberfromMongo();
         System.out.println("die Protokolle werden hinzugefügt......");
         StringBuilder sb;
         JCas jCas;
@@ -374,35 +377,6 @@ public class Main {
         boolean exit = false;
         ArrayList<RedeJcas> redejcaslist = new ArrayList<>();
         RedeJcas rj;
-
-        for(Protokoll p: protokolls){
-            for (Tagesordnungspunkt t: p.getTagesordnungspunkts()){
-                for(Rede r : t.getReden()){
-
-                    count++;
-                    sb = new StringBuilder();
-                    for(String s: r.getRedetext()){
-                        sb.append(s);
-                    }
-                    jCas = toCas(sb.toString());
-                    //System.out.println(sb.toString());
-                    rj = new RedeJcas(r,jCas);
-                    redejcaslist.add(rj);
-                    if(count> 3){
-                        //exit = true; //tüm redeleri jcas a cevirmek icin bu satiri commentle
-                        break;
-                    }
-
-                }
-                //if(exit){
-                    //break;
-                //}
-            }
-            //if(exit){
-                //break;
-            //}
-        }
-        System.out.println("redecount : "+count);
 
         AggregateBuilder builder = new AggregateBuilder();
         builder.add(createEngineDescription(SpaCyMultiTagger3.class,
@@ -413,6 +387,51 @@ public class Main {
         AnalysisEngine pAE = builder.createAggregate();
 
         JCas_MongoDB_Impl jmongo = new JCas_MongoDB_Impl(db);
+        Protokoll p;
+        ArrayList<String> errorlist = new ArrayList<>();
+
+        int j = 0;
+        for(String sitzungsnumber: sitzungsnumbers){
+            j++;
+            try {
+                System.out.println(j+"  Reading Protocol sitzungsnumber : " + sitzungsnumber);
+                p = pmongo.readProtocol(sitzungsnumber);
+                System.out.println(j +"  Success Protocol sitzungsnumber : " + sitzungsnumber);
+                for (Tagesordnungspunkt t: p.getTagesordnungspunkts()){
+                    for(Rede r : t.getReden()){
+
+                        count++;
+                        sb = new StringBuilder();
+                        for(String s: r.getRedetext()){
+                            sb.append(s);
+                        }
+                        jCas = toCas(sb.toString());
+                        //System.out.println(sb.toString());
+
+
+                        System.out.println(j +"  Reading Protocol sitzungsnumber : " + sitzungsnumber);
+                        System.out.println("######################################    "+ count + "   ###########################################");
+                        SimplePipeline.runPipeline(jCas, pAE);
+                        //PrintJCasInfo(j);
+                        //System.out.println(getXml(j));
+                        jmongo.InsertJcasXml(getXml(jCas),r);
+                    }
+
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                errorlist.add(sitzungsnumber);
+            }
+
+        }
+        if(errorlist.size() > 0) {
+            System.out.println("************************* Error Protocol sitzungsnummber *************************************");
+            for (String s: errorlist){
+                System.out.println(s);
+            }
+        }
+        System.out.println("redecount : "+count);
+
 
         int i = 1;
         for(RedeJcas rjs : redejcaslist) {
@@ -429,6 +448,7 @@ public class Main {
 
 
     }
+
 
     /***
      * Dank des Pipelines wird jede CAS Obeckt dem Xml-String serialisiert.

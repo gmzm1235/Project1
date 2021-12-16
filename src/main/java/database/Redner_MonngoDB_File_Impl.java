@@ -56,7 +56,7 @@ public class Redner_MonngoDB_File_Impl {
     /***
      * In dieser Methode werden der Redner in dem MongoDB aktualisiert.
      * @param redner
-     * @return
+     * @return result.getModifiedCount()
      */
     public long updateRedner(Redner redner){
         MongoCollection<Document> redners = database.getCollection("redners");

@@ -65,7 +65,7 @@ public class Protokoll_MongoDB_Impl {
     /***
      * in dieser Methode wird das Protocol, das bestimmten Parameter (sitzungsnumber) hat, aus der MongoDB gelöscht.
      * @param sitzungsnumber
-     * @return
+     * @return result.getDeletedCount()
      */
     public long deleteProtocol(String sitzungsnumber){
         MongoCollection<Document> collection = database.getCollection("protocol");
@@ -80,7 +80,7 @@ public class Protokoll_MongoDB_Impl {
     /***
      * in dieser Methode wird das Protocol, das bestimmten Parameter (sitzungsnumber) hat, aus der MongoDB gelesen.
      * @param sitzungsnumber
-     * @return
+     * @return p
      * @throws Exception
      */
     public Protokoll readProtocol(String sitzungsnumber) throws Exception{
@@ -119,7 +119,7 @@ public class Protokoll_MongoDB_Impl {
 
     /***
      * in dieser Methode werden alle Protokolle aus der MongoDB gelesen.
-     * @return
+     * @return protokolls
      */
     public ArrayList<Protokoll> readAllProtocolsfromMongo() {
         MongoCollection<Document> collection = database.getCollection("protocol");
@@ -148,10 +148,30 @@ public class Protokoll_MongoDB_Impl {
     }
 
     /***
+     * in dieser Methode werden alle Protokolleid (sitzungsnumber) aus der MongoDB gelesen.
+     * @return sitzungsnumbers
+     */
+    public ArrayList<String> readAllProtocolssitzungsnumberfromMongo() {
+        MongoCollection<Document> collection = database.getCollection("protocol");
+        Document doc;
+        FindIterable<Document> itr;
+        itr = collection.find();
+        MongoCursor<Document> cursor = itr.iterator();
+        String sitzungsnumber;
+        ArrayList<String> sitzungsnumbers = new ArrayList<>();
+        while (cursor.hasNext() ) {
+            doc = cursor.next();
+            sitzungsnumber = doc.getString("sitzungsnumber");
+            sitzungsnumbers.add(sitzungsnumber);
+        }
+        return sitzungsnumbers;
+    }
+
+    /***
      * In dieser Methode werden die Tagesordnungspunkten als Arraylist erstellt, um die Protokolle einfacher zu lesen.
      * @param tageslist
      * @param protokoll
-     * @return
+     * @return tlist
      */
 
     private ArrayList<Tagesordnungspunkt> tagesordnungspunktList(List<Document> tageslist, Protokoll protokoll) {
@@ -176,7 +196,7 @@ public class Protokoll_MongoDB_Impl {
      * In dieser Methode werden die Redetext als Arraylist erstellt, um die Protokolle einfacher zu lesen.
      * @param rededoclist
      * @param tagesordnungspunkt
-     * @return
+     * @return redelist
      */
     private ArrayList<Rede> buildredelist (List<Document> rededoclist, Tagesordnungspunkt tagesordnungspunkt) {
         ArrayList<Rede> redelist = new ArrayList<>();
@@ -205,7 +225,7 @@ public class Protokoll_MongoDB_Impl {
     /***
      * in dieser Methode wird jede Redetext als Document erstellt, um die Protokolle zu lesen.
      * @param reden
-     * @return
+     * @return lst
      */
     private List<Document> redelistdocument(List<Rede> reden) {
         Document doc;

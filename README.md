@@ -17,6 +17,8 @@ Sind in diesem keine enthalten, muss der User den Pfad erneut eingeben.
 Danach wird der User gefragt was er machen möchte. Seine Wahl gibt er immer mit einer Zahl an. Welche Möglichkeiten es gibt werden ausgeprintet.
 Userinterface:
 
+--Enter 0 : Read all Xml Files--
+
 --Enter 1 : Redners--
 --Enter 2 : Abgeordnete--
 
