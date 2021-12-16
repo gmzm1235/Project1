@@ -306,6 +306,7 @@ public class Plenarsitzung {
         Redner redner = FindRednerFromMap(rednerid);
         rede.setRedner(redner);
         NodeList paragraphlist = e.getElementsByTagName("p");
+        NodeList kommentarlist = e.getElementsByTagName("kommentar");
         String klasse;
         Element ep;
         ArrayList<String> strlist = new ArrayList<String>();
@@ -316,6 +317,12 @@ public class Plenarsitzung {
                 strlist.add(ep.getTextContent());
 
             }
+
+        }
+        Element k;
+        for (int i = 0; i<kommentarlist.getLength(); i++){
+            k = (Element) kommentarlist.item(i);
+            strlist.add(k.getTextContent());
 
         }
         rede.setRedetext(strlist);
@@ -505,7 +512,8 @@ public class Plenarsitzung {
                 Element root = document.getDocumentElement();
                 NodeList list = root.getElementsByTagName("rednerliste");
                 Element rednerlist = (Element) list.item(0);
-                NodeList list2 = rednerlist.getElementsByTagName("redner");
+                //NodeList list2 = rednerlist.getElementsByTagName("redner");
+                NodeList list2 = root.getElementsByTagName("redner");
                 Redner redner;
                 for(int i = 0; i < list2.getLength(); i++) {
                     redner = FindRedner((Element) list2.item(i));
