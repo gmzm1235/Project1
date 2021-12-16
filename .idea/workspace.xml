@@ -4,14 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="e1156904-ce1d-4ad2-963a-0043eea1bf13" name="Changes" comment="5">
+    <list default="true" id="e1156904-ce1d-4ad2-963a-0043eea1bf13" name="Changes" comment="6">
+      <change afterPath="$PROJECT_DIR$/Package_02.pdf" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/usecase_2.1.pdf" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/usecase_2.2.pdf" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/Main.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/database/Protokoll_MongoDB_Impl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/database/Protokoll_MongoDB_Impl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/database/Redner_MonngoDB_File_Impl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/database/Redner_MonngoDB_File_Impl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/Main.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/Main.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/database/Protokoll_MongoDB_Impl.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/database/Protokoll_MongoDB_Impl.class" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -193,7 +190,28 @@
       <option name="project" value="LOCAL" />
       <updated>1639668421645</updated>
     </task>
-    <option name="localTasksCounter" value="17" />
+    <task id="LOCAL-00017" summary="6">
+      <created>1639679029899</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1639679029899</updated>
+    </task>
+    <task id="LOCAL-00018" summary="6">
+      <created>1639679053881</created>
+      <option name="number" value="00018" />
+      <option name="presentableId" value="LOCAL-00018" />
+      <option name="project" value="LOCAL" />
+      <updated>1639679053881</updated>
+    </task>
+    <task id="LOCAL-00019" summary="6">
+      <created>1639679162695</created>
+      <option name="number" value="00019" />
+      <option name="presentableId" value="LOCAL-00019" />
+      <option name="project" value="LOCAL" />
+      <updated>1639679162695</updated>
+    </task>
+    <option name="localTasksCounter" value="20" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -211,11 +229,12 @@
     <option name="ADD_EXTERNAL_FILES_SILENTLY" value="true" />
     <MESSAGE value="1" />
     <MESSAGE value="2" />
-    <MESSAGE value="6" />
     <MESSAGE value="Merge remote-tracking branch 'origin/master'&#10;&#10;# Conflicts:&#10;#&#9;.idea/workspace.xml&#10;#&#9;src/main/java/Main.java&#10;#&#9;src/main/java/database/MongoDBConnectionHandler.java&#10;#&#9;target/classes/Main.class&#10;#&#9;target/classes/database/MongoDBConnectionHandler.class" />
     <MESSAGE value="3" />
     <MESSAGE value="4" />
     <MESSAGE value="5" />
-    <option name="LAST_COMMIT_MESSAGE" value="5" />
+    <MESSAGE value="7" />
+    <MESSAGE value="6" />
+    <option name="LAST_COMMIT_MESSAGE" value="6" />
   </component>
 </project>
